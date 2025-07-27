@@ -1,12 +1,32 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../models/User'); // ধরছি Mongoose মডেল আছে
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your_fallback_secret';
 const JWT_EXPIRES_IN = '365d';
 
-// ✅ Register Route
+// ✅ Check Account (Phone Exists)
+router.post('/check-account', async (req, res) => {
+  const { phone } = req.body;
+  if (!phone) {
+    return res.status(400).json({ message: 'Phone number is required' });
+  }
+
+  try {
+    const user = await User.findOne({ phone });
+    if (user) {
+      return res.status(200).json({ exists: true, message: 'Account exists with this phone number' });
+    } else {
+      return res.status(200).json({ exists: false, message: 'No account found with this phone number' });
+    }
+  } catch (error) {
+    console.error('Check Account Error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ✅ Register
 router.post('/register', async (req, res) => {
   const { phone, password, name = '', businessName = '', email = '', fatherName = '', motherName = '', address = '', profileImage = '' } = req.body;
 
@@ -22,7 +42,7 @@ router.post('/register', async (req, res) => {
 
     const user = new User({
       phone,
-      password, // ✅ হ্যাশিং মডেলেই হবে
+      password, // => আপনার User মডেলে আগে থেকে হ্যাশিং লাগানো আছে ধরে নিচ্ছি
       name,
       businessName,
       email,
@@ -57,7 +77,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// ✅ Login Route
+// ✅ Login
 router.post('/login', async (req, res) => {
   const { phone, password } = req.body;
 
@@ -97,6 +117,11 @@ router.post('/login', async (req, res) => {
     console.error('Login Error:', error);
     res.status(500).json({ message: 'Server error' });
   }
+});
+
+// ✅ Placeholder for OTP (Future)
+router.post('/send-otp', (req, res) => {
+  return res.status(200).json({ message: 'OTP service coming soon!' });
 });
 
 module.exports = router;
