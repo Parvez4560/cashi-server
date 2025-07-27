@@ -1,14 +1,14 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User'); // ধরছি Mongoose মডেল আছে
+const User = require('../models/User');  // আপনার মডেল
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your_fallback_secret';
 const JWT_EXPIRES_IN = '365d';
 
-// ✅ Check Account (Phone Exists)
-router.post('/check-account', async (req, res) => {
-  const { phone } = req.body;
+// ✅ Check Account (Phone Exists) - GET with query parameter
+router.get('/check-number', async (req, res) => {
+  const phone = req.query.number; // Flutter থেকে ?number= আসছে
   if (!phone) {
     return res.status(400).json({ message: 'Phone number is required' });
   }
@@ -16,19 +16,29 @@ router.post('/check-account', async (req, res) => {
   try {
     const user = await User.findOne({ phone });
     if (user) {
-      return res.status(200).json({ exists: true, message: 'Account exists with this phone number' });
+      return res.status(200).json({ exists: true });
     } else {
-      return res.status(200).json({ exists: false, message: 'No account found with this phone number' });
+      return res.status(200).json({ exists: false });
     }
   } catch (error) {
-    console.error('Check Account Error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
-// ✅ Register
+// ✅ Register (POST)
 router.post('/register', async (req, res) => {
-  const { phone, password, name = '', businessName = '', email = '', fatherName = '', motherName = '', address = '', profileImage = '' } = req.body;
+  const {
+    phone,
+    password,
+    name = '',
+    businessName = '',
+    email = '',
+    fatherName = '',
+    motherName = '',
+    address = '',
+    profileImage = '',
+  } = req.body;
 
   if (!phone || !password) {
     return res.status(400).json({ message: 'Phone and password are required' });
@@ -42,14 +52,14 @@ router.post('/register', async (req, res) => {
 
     const user = new User({
       phone,
-      password, // => আপনার User মডেলে আগে থেকে হ্যাশিং লাগানো আছে ধরে নিচ্ছি
+      password, // আপনার মডেলে password হ্যাশিং নিশ্চিত করুন
       name,
       businessName,
       email,
       fatherName,
       motherName,
       address,
-      profileImage
+      profileImage,
     });
 
     await user.save();
@@ -68,16 +78,16 @@ router.post('/register', async (req, res) => {
         fatherName: user.fatherName,
         motherName: user.motherName,
         address: user.address,
-        profileImage: user.profileImage
-      }
+        profileImage: user.profileImage,
+      },
     });
   } catch (error) {
-    console.error('Register Error:', error);
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// ✅ Login
+// ✅ Login (POST)
 router.post('/login', async (req, res) => {
   const { phone, password } = req.body;
 
@@ -91,7 +101,7 @@ router.post('/login', async (req, res) => {
       return res.status(404).json({ message: 'No account found with this phone number' });
     }
 
-    const isMatch = await user.matchPassword(password);
+    const isMatch = await user.matchPassword(password);  // মডেলে matchPassword ফাংশন থাকা লাগবে
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid password' });
     }
@@ -110,16 +120,16 @@ router.post('/login', async (req, res) => {
         fatherName: user.fatherName,
         motherName: user.motherName,
         address: user.address,
-        profileImage: user.profileImage
-      }
+        profileImage: user.profileImage,
+      },
     });
   } catch (error) {
-    console.error('Login Error:', error);
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// ✅ Placeholder for OTP (Future)
+// ✅ Placeholder OTP (optional)
 router.post('/send-otp', (req, res) => {
   return res.status(200).json({ message: 'OTP service coming soon!' });
 });
