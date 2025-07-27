@@ -1,31 +1,39 @@
-const User = require('../models/userModel'); // ইউজার মডেল ইমপোর্ট
-const bcrypt = require('bcryptjs');
+const User = require('../models/User');
 
-// রেজিস্টার ইউজার
+// ✅ রেজিস্ট্রেশন
 const registerUser = async (req, res) => {
-  const { name, phone, password, email, address, fatherName, motherName, businessName, profileImage } = req.body;
+  const {
+    name,
+    phone,
+    password,
+    email,
+    address,
+    fatherName,
+    motherName,
+    businessName,
+    profileImage
+  } = req.body;
+
+  if (!phone || !password) {
+    return res.status(400).json({ message: 'Phone and password are required' });
+  }
 
   try {
-    // যদি ফোন নাম্বার আগেই থাকে
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
       return res.status(400).json({ message: 'Phone number already exists' });
     }
 
-    // পাসওয়ার্ড হ্যাশ
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // নতুন ইউজার তৈরি
     const newUser = await User.create({
       name,
       phone,
-      password: hashedPassword,
+      password,
       email,
       address,
       fatherName,
       motherName,
       businessName,
-      profileImage,
+      profileImage
     });
 
     res.status(201).json({
@@ -33,16 +41,16 @@ const registerUser = async (req, res) => {
       user: {
         id: newUser._id,
         name: newUser.name,
-        phone: newUser.phone,
-      },
+        phone: newUser.phone
+      }
     });
   } catch (error) {
-    console.error('Registration error:', error.message);
+    console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// ইউজার প্রোফাইল
+// ✅ ইউজার প্রোফাইল (প্রয়োজনে)
 const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
@@ -55,7 +63,4 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-module.exports = {
-  registerUser,
-  getUserProfile,
-};
+module.exports = { registerUser, getUserProfile };

@@ -1,19 +1,12 @@
 const express = require('express');
+const { registerUser, getUserProfile } = require('../controllers/userController');
+const { protect } = require('../middleware/authMiddleware'); // টোকেন চেক (যদি ব্যবহার করেন)
 const router = express.Router();
 
-// Controller থেকে ফাংশন ইমপোর্ট
-const { registerUser, getUserProfile } = require('../controllers/userController');
-
-// Middleware থেকে protect ইমপোর্ট (যেটা টোকেন যাচাই করে)
-const { protect } = require('../middleware/authMiddleware');
-
-// @route   POST /api/user/register
-// @access  Public
+// ✅ রেজিস্ট্রেশন
 router.post('/register', registerUser);
 
-// @route   GET /api/user/profile
-// @access  Private (শুধু লগইন ইউজার)
+// ✅ প্রোফাইল (লগইন হলে)
 router.get('/profile', protect, getUserProfile);
 
-// রাউটার এক্সপোর্ট
 module.exports = router;
