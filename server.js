@@ -52,6 +52,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/records', require('./routes/records'));
 app.use('/api/user', require('./routes/userRoutes'));
 app.use('/api/stats', require('./routes/stats'));
+app.use('/api/transactions', require('./routes/transaction.routes'));
 
 // ✅ 404 Handler
 app.use((req, res) => {
