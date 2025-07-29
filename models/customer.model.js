@@ -12,7 +12,8 @@ const customerSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   address: { type: String },
   balance: { type: Number, default: 0 },
-  transactions: [transactionSchema]
+  transactions: [transactionSchema],
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true } // ✅ Added userId
 });
 
 export default mongoose.model('Customer', customerSchema);
