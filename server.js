@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
-const helmet = require('helmet'); // Security headers
-const rateLimit = require('express-rate-limit'); // Rate limiting
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 // ✅ Load environment variables
@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet()); // Adds security headers
 app.use(morgan('dev'));
 
-// ✅ Rate Limiting (Protect from brute force)
+// ✅ Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 mins
   max: 100, // limit each IP
@@ -34,10 +34,11 @@ if (!mongoURI) {
   process.exit(1);
 }
 
+mongoose.set('strictQuery', false);
 mongoose
   .connect(mongoURI)
   .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch(err => {
+  .catch((err) => {
     console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);
   });
@@ -47,12 +48,16 @@ app.get('/', (req, res) => {
   res.json({ status: '✅ Server is running', app: 'Hisabi Accounting' });
 });
 
-// ✅ Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/records', require('./routes/records'));
-app.use('/api/user', require('./routes/userRoutes'));
-app.use('/api/stats', require('./routes/stats'));
-app.use('/api/transactions', require('./routes/transaction.routes'));
+// ✅ Routes Loading with Error Handling
+try {
+  app.use('/api/auth', require('./routes/auth'));
+  app.use('/api/records', require('./routes/records'));
+  app.use('/api/user', require('./routes/userRoutes'));
+  app.use('/api/stats', require('./routes/stats'));
+  app.use('/api/transactions', require('./routes/transaction.routes'));
+} catch (err) {
+  console.error('❌ Route loading error:', err.message);
+}
 
 // ✅ 404 Handler
 app.use((req, res) => {
