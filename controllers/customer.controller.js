@@ -1,30 +1,32 @@
-import Customer from '../models/customer.model.js';
+import Customer from "../models/customer.model.js";
 
 // ✅ Create Customer
 export const createCustomer = async (req, res) => {
   try {
-    const { name, phone, address } = req.body;
+    const { name, phone, address, email } = req.body;
 
-    const customer = new Customer({
+    const newCustomer = new Customer({
       name,
       phone,
       address,
-      userId: req.user.id // ✅ Linked with logged-in user
+      email,
+      user: req.user._id,
+      image: req.file ? `/uploads/${req.file.filename}` : null,
     });
 
-    await customer.save();
-    res.status(201).json(customer);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    await newCustomer.save();
+    res.status(201).json(newCustomer);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-// ✅ Get All Customers for logged-in user
+// ✅ Get All Customers
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find({ userId: req.user.id }); // ✅ Filter by userId
+    const customers = await Customer.find({ user: req.user._id });
     res.json(customers);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

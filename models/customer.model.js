@@ -1,19 +1,15 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const transactionSchema = new mongoose.Schema({
-  type: { type: String, enum: ['credit', 'debit'], required: true },
-  amount: { type: Number, required: true },
-  note: { type: String },
-  date: { type: Date, default: Date.now }
-});
+const customerSchema = mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    phone: { type: String, required: true, unique: true },
+    address: { type: String },
+    email: { type: String },
+    image: { type: String }, // File URL
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Which user created it
+  },
+  { timestamps: true }
+);
 
-const customerSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  phone: { type: String, required: true },
-  address: { type: String },
-  balance: { type: Number, default: 0 },
-  transactions: [transactionSchema],
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true } // ✅ Added userId
-});
-
-export default mongoose.model('Customer', customerSchema);
+export default mongoose.model("Customer", customerSchema);
