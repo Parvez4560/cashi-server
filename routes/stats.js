@@ -1,9 +1,10 @@
-const express = require('express');
+import express from "express";
+
 const router = express.Router();
 
-// Stats route - ড্যাশবোর্ড বা রিপোর্ট সংক্রান্ত API
-router.get('/', (req, res) => {
-  res.json({ message: '📊 Stats route is working!' });
+// ✅ Sample Stats API
+router.get("/", (req, res) => {
+res.json({ message: "📊 Stats API is working!" });
 });
 
-module.exports = router;
+export default router; // ✅ Add this

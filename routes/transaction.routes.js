@@ -1,45 +1,16 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/userModel');
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';  // ধরছি আপনার auth middleware এখানে আছে
+import {
+  addTransaction,
+  getUserTransactions,
+  getCustomerTransactions,
+} from '../controllers/transaction.controller.js'; // আপনার ট্রানজেকশন কন্ট্রোলার
 
-// ✅ Middleware: টোকেন যাচাই এবং req.user এ ইউজার যোগ করা
-const protect = async (req, res, next) => {
-  let token;
+const router = express.Router();
 
-  // ✅ Check for Authorization Header
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
+// সমস্ত রাউট প্রটেক্টেড Middleware দিয়ে নিরাপদ করা হয়েছে
+router.post('/', protect, addTransaction); // নতুন ট্রানজেকশন যোগ করা
+router.get('/', protect, getUserTransactions); // ইউজারের সব ট্রানজেকশন
+router.get('/customer/:customerId', protect, getCustomerTransactions); // নির্দিষ্ট গ্রাহকের ট্রানজেকশন
 
-      if (!token) {
-        return res.status(401).json({ message: 'Unauthorized: No token provided' });
-      }
-
-      // ✅ Verify Token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // ✅ Attach user to request (without password)
-      req.user = await User.findById(decoded.id).select('-password');
-
-      if (!req.user) {
-        return res.status(401).json({ message: 'User not found' });
-      }
-
-      next(); // ✅ Everything is fine, move forward
-    } catch (error) {
-      console.error('❌ Token verification failed:', error.message);
-
-      if (error.name === 'TokenExpiredError') {
-        return res.status(401).json({ message: 'Unauthorized: Token expired' });
-      }
-
-      res.status(401).json({ message: 'Unauthorized: Invalid token' });
-    }
-  } else {
-    return res.status(401).json({ message: 'Unauthorized: No token provided' });
-  }
-};
-
-module.exports = { protect };
+export default router;

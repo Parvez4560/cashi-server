@@ -1,7 +1,7 @@
-const User = require('../models/User');
+import User from '../models/User.js';
 
 // ✅ রেজিস্ট্রেশন
-const registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
   const {
     name,
     phone,
@@ -11,7 +11,7 @@ const registerUser = async (req, res) => {
     fatherName,
     motherName,
     businessName,
-    profileImage
+    profileImage,
   } = req.body;
 
   if (!phone || !password) {
@@ -33,7 +33,7 @@ const registerUser = async (req, res) => {
       fatherName,
       motherName,
       businessName,
-      profileImage
+      profileImage,
     });
 
     res.status(201).json({
@@ -41,8 +41,8 @@ const registerUser = async (req, res) => {
       user: {
         id: newUser._id,
         name: newUser.name,
-        phone: newUser.phone
-      }
+        phone: newUser.phone,
+      },
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -51,7 +51,7 @@ const registerUser = async (req, res) => {
 };
 
 // ✅ ইউজার প্রোফাইল (প্রয়োজনে)
-const getUserProfile = async (req, res) => {
+export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) {
@@ -59,8 +59,7 @@ const getUserProfile = async (req, res) => {
     }
     res.json(user);
   } catch (error) {
+    console.error('Get user profile error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
-
-module.exports = { registerUser, getUserProfile };

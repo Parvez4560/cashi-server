@@ -1,17 +1,17 @@
- 
-const express = require('express');
-const router = express.Router();
-const Transaction = require('../models/Transaction');
+import express from "express";
+import Transaction from "../models/Transaction.js";
 
-//  সিম্পল অথেন্টিকেশন middleware
+const router = express.Router();
+
+// ✅ Simple Auth Middleware (Demo)
 const auth = (req, res, next) => {
-  // শুধু ডেমো: ভবিষ্যতে JWT দিয়ে validate করবেন
-  req.user = { id: req.headers['userid'] }; // ইউজার আইডি header এ পাঠান
+  // Future: JWT validation যোগ হবে
+  req.user = { id: req.headers["userid"] }; // Header এ userid পাঠাতে হবে
   next();
 };
 
-//  ট্রানজেকশন যোগ
-router.post('/add', auth, async (req, res) => {
+// ✅ Add Transaction
+router.post("/add", auth, async (req, res) => {
   const { type, amount, category, note, date } = req.body;
 
   try {
@@ -21,26 +21,28 @@ router.post('/add', auth, async (req, res) => {
       amount,
       category,
       note,
-      date
+      date,
     });
 
     await transaction.save();
     res.json(transaction);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
-//  ইউজারের সব ট্রানজেকশন
-router.get('/my', auth, async (req, res) => {
+// ✅ Get User Transactions
+router.get("/my", auth, async (req, res) => {
   try {
-    const transactions = await Transaction.find({ user: req.user.id }).sort({ date: -1 });
+    const transactions = await Transaction.find({ user: req.user.id }).sort({
+      date: -1,
+    });
     res.json(transactions);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
-module.exports = router;
+export default router; // ✅ অবশ্যই ESM এ এই লাইন থাকতে হবে

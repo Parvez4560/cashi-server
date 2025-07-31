@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const transactionSchema = new mongoose.Schema(
   {
@@ -20,9 +20,12 @@ const transactionSchema = new mongoose.Schema(
     amount: {
       type: Number,
       required: true,
+      min: 0, // amount কখনো নেগেটিভ হবে না (ইচ্ছা করলে যুক্ত করতে পারেন)
     },
     note: {
       type: String,
+      trim: true,
+      default: '',
     },
     date: {
       type: Date,
@@ -32,4 +35,6 @@ const transactionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Transaction', transactionSchema);
+const Transaction = mongoose.model('Transaction', transactionSchema);
+
+export default Transaction;
