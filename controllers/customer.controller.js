@@ -1,6 +1,6 @@
 import Customer from "../models/customer.model.js";
 
-// ✅ Create Customer
+// Create Customer
 export const createCustomer = async (req, res) => {
   try {
     const { name, phone, address, email } = req.body;
@@ -9,8 +9,8 @@ export const createCustomer = async (req, res) => {
       return res.status(400).json({ message: "Name and phone are required" });
     }
 
-    // Check duplicate phone
-    const existingCustomer = await Customer.findOne({ phone, user: req.user._id });
+    // Check duplicate phone for the same userId
+    const existingCustomer = await Customer.findOne({ phone, userId: req.user._id });
     if (existingCustomer) {
       return res.status(409).json({ message: "Customer with this phone already exists" });
     }
@@ -20,7 +20,7 @@ export const createCustomer = async (req, res) => {
       phone,
       address,
       email,
-      user: req.user._id,
+      userId: req.user._id,   // এখানে userId ফিল্ড ব্যবহার করা হয়েছে
       image: req.file ? `/uploads/${req.file.filename}` : "",
     });
 
@@ -32,10 +32,10 @@ export const createCustomer = async (req, res) => {
   }
 };
 
-// ✅ Get All Customers
+// Get All Customers for logged-in user
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const customers = await Customer.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json(customers);
   } catch (error) {
     console.error("❌ Error fetching customers:", error.message);
