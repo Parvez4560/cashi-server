@@ -5,28 +5,40 @@ export const createCustomer = async (req, res) => {
   try {
     const { name, phone, address, email } = req.body;
 
+    if (!name || !phone) {
+      return res.status(400).json({ message: "Name and phone are required" });
+    }
+
+    // Check duplicate phone
+    const existingCustomer = await Customer.findOne({ phone, user: req.user._id });
+    if (existingCustomer) {
+      return res.status(409).json({ message: "Customer with this phone already exists" });
+    }
+
     const newCustomer = new Customer({
       name,
       phone,
       address,
       email,
       user: req.user._id,
-      image: req.file ? `/uploads/${req.file.filename}` : null,
+      image: req.file ? `/uploads/${req.file.filename}` : "",
     });
 
-    await newCustomer.save();
-    res.status(201).json(newCustomer);
+    const savedCustomer = await newCustomer.save();
+    res.status(201).json({ message: "Customer added successfully", data: savedCustomer });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("❌ Error creating customer:", error.message);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
 
 // ✅ Get All Customers
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find({ user: req.user._id });
-    res.json(customers);
+    const customers = await Customer.find({ user: req.user._id }).sort({ createdAt: -1 });
+    res.status(200).json(customers);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("❌ Error fetching customers:", error.message);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };

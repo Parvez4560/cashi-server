@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 
-const customerSchema = mongoose.Schema(
+const customerSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    phone: { type: String, required: true, unique: true },
-    address: { type: String },
-    email: { type: String },
-    image: { type: String }, // File URL
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Which user created it
+    name: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, unique: true, trim: true },
+    address: { type: String, default: "" },
+    email: { type: String, default: "" },
+    image: { type: String, default: "" }, // File URL
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Which user created it
   },
   { timestamps: true }
 );

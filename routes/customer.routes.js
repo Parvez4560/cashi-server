@@ -5,9 +5,10 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// File Upload Setup
+// ✅ File Upload Setup
 const upload = multer({ dest: "uploads/" });
 
+// ✅ Routes
 router.post("/", protect, upload.single("image"), createCustomer);
 router.get("/", protect, getCustomers);
 
