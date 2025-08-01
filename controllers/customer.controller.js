@@ -11,19 +11,16 @@ export const createCustomer = async (req, res) => {
       return res.status(400).json({ message: "Name and phone are required" });
     }
 
-    // ✅ Check if this phone exists in Customer, Supplier or Employee for the same userId
-    const existingCustomer = await Customer.findOne({ phone, userId: req.user._id });
-    const existingSupplier = await Supplier.findOne({ phone, userId: req.user._id });
-    const existingEmployee = await Employee.findOne({ phone, userId: req.user._id });
+    // ✅ Check if this phone exists in Customer, Supplier or Employee for the same user
+    const [existingCustomer, existingSupplier, existingEmployee] = await Promise.all([
+      Customer.findOne({ phone, user: req.user._id }),
+      Supplier.findOne({ phone, user: req.user._id }),
+      Employee.findOne({ phone, user: req.user._id }),
+    ]);
 
     if (existingCustomer || existingSupplier || existingEmployee) {
-      let type = existingCustomer
-        ? "Customer"
-        : existingSupplier
-        ? "Supplier"
-        : "Employee";
-
-      return res.status(400).json({
+      const type = existingCustomer ? "কাস্টমার" : existingSupplier ? "সাপ্লায়ার" : "কর্মচারী";
+      return res.status(409).json({
         message: `এই নাম্বারটি আগে থেকেই ${type} হিসেবে রেজিস্টার করা হয়েছে।`,
       });
     }
@@ -33,30 +30,35 @@ export const createCustomer = async (req, res) => {
       phone,
       address,
       email,
-      userId: req.user._id, // ✅ userId should exist in schema
+      user: req.user._id, // ✅ keep consistent with schema
       image: req.file ? `/uploads/${req.file.filename}` : "",
     });
 
     const savedCustomer = await newCustomer.save();
     res.status(201).json({
-      message: "Customer added successfully",
+      message: "কাস্টমার সফলভাবে যোগ হয়েছে।",
       data: savedCustomer,
     });
+
   } catch (error) {
     console.error("❌ Error creating customer:", error.message);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+
+    // ✅ Handle MongoDB duplicate key error
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "এই নাম্বারটি আগে থেকেই রেজিস্টার করা আছে।" });
+    }
+
+    res.status(500).json({ message: "সার্ভারে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন।" });
   }
 };
 
 // ✅ Get All Customers for logged-in user
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find({ userId: req.user._id }).sort({
-      createdAt: -1,
-    });
+    const customers = await Customer.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json(customers);
   } catch (error) {
     console.error("❌ Error fetching customers:", error.message);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res.status(500).json({ message: "সার্ভারে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন।" });
   }
 };

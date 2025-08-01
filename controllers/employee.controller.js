@@ -8,22 +8,19 @@ export const createEmployee = async (req, res) => {
     const { name, position, phone, email, address, salary } = req.body;
 
     if (!name || !position || !phone) {
-      return res.status(400).json({ message: "Name, position, and phone are required" });
+      return res.status(400).json({ message: "নাম, পজিশন এবং ফোন প্রয়োজনীয়" });
     }
 
-    // ✅ Check duplicate phone in Customer, Supplier, or Employee for this user
-    const existingCustomer = await Customer.findOne({ phone, userId: req.user._id });
-    const existingSupplier = await Supplier.findOne({ phone, userId: req.user._id });
-    const existingEmployee = await Employee.findOne({ phone, userId: req.user._id });
+    // ✅ একসাথে তিনটি চেকের জন্য Promise.all ব্যবহার করা হলো
+    const [existingCustomer, existingSupplier, existingEmployee] = await Promise.all([
+      Customer.findOne({ phone, user: req.user._id }),
+      Supplier.findOne({ phone, user: req.user._id }),
+      Employee.findOne({ phone, user: req.user._id }),
+    ]);
 
     if (existingCustomer || existingSupplier || existingEmployee) {
-      let type = existingCustomer
-        ? "Customer"
-        : existingSupplier
-        ? "Supplier"
-        : "Employee";
-
-      return res.status(400).json({
+      const type = existingCustomer ? "কাস্টমার" : existingSupplier ? "সাপ্লায়ার" : "কর্মচারী";
+      return res.status(409).json({
         message: `এই নাম্বারটি আগে থেকেই ${type} হিসেবে রেজিস্টার করা হয়েছে।`,
       });
     }
@@ -35,20 +32,26 @@ export const createEmployee = async (req, res) => {
       email,
       address,
       salary,
-      userId: req.user._id,
+      user: req.user._id, // ✅ consistent field name
       image: req.file ? `/uploads/${req.file.filename}` : null,
     });
 
     const savedEmployee = await newEmployee.save();
     res.status(201).json({
-      message: "Employee added successfully",
+      message: "কর্মচারী সফলভাবে যোগ করা হয়েছে।",
       data: savedEmployee,
     });
+
   } catch (error) {
     console.error("❌ Error creating employee:", error.message);
+
+    // ✅ MongoDB ডুপ্লিকেট key এরর হ্যান্ডেল
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "এই নাম্বারটি আগে থেকেই রেজিস্টার করা আছে।" });
+    }
+
     res.status(500).json({
-      message: "Internal Server Error",
-      error: error.message,
+      message: "সার্ভারে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন।",
     });
   }
 };
@@ -56,15 +59,12 @@ export const createEmployee = async (req, res) => {
 // ✅ Get Employees
 export const getEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find({ userId: req.user._id }).sort({
-      createdAt: -1,
-    });
+    const employees = await Employee.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json(employees);
   } catch (error) {
     console.error("❌ Error fetching employees:", error.message);
     res.status(500).json({
-      message: "Internal Server Error",
-      error: error.message,
+      message: "সার্ভারে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন।",
     });
   }
 };
