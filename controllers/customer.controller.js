@@ -11,11 +11,11 @@ export const createCustomer = async (req, res) => {
       return res.status(400).json({ message: "Name and phone are required" });
     }
 
-    // ✅ Check if this phone exists in Customer, Supplier or Employee for the same user
+    // ✅ Check if phone exists in any contact type for the same user
     const [existingCustomer, existingSupplier, existingEmployee] = await Promise.all([
-      Customer.findOne({ phone, user: req.user._id }),
-      Supplier.findOne({ phone, user: req.user._id }),
-      Employee.findOne({ phone, user: req.user._id }),
+      Customer.findOne({ phone, userId: req.user._id }),
+      Supplier.findOne({ phone, userId: req.user._id }),
+      Employee.findOne({ phone, userId: req.user._id }),
     ]);
 
     if (existingCustomer || existingSupplier || existingEmployee) {
@@ -30,32 +30,29 @@ export const createCustomer = async (req, res) => {
       phone,
       address,
       email,
-      user: req.user._id, // ✅ keep consistent with schema
+      userId: req.user._id, // ✅ ফিক্স
       image: req.file ? `/uploads/${req.file.filename}` : "",
     });
 
     const savedCustomer = await newCustomer.save();
     res.status(201).json({
-      message: "কাস্টমার সফলভাবে যোগ হয়েছে।",
+      message: "✅ কাস্টমার সফলভাবে যোগ হয়েছে।",
       data: savedCustomer,
     });
 
   } catch (error) {
     console.error("❌ Error creating customer:", error.message);
-
-    // ✅ Handle MongoDB duplicate key error
     if (error.code === 11000) {
       return res.status(409).json({ message: "এই নাম্বারটি আগে থেকেই রেজিস্টার করা আছে।" });
     }
-
     res.status(500).json({ message: "সার্ভারে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন।" });
   }
 };
 
-// ✅ Get All Customers for logged-in user
+// ✅ Get Customers
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const customers = await Customer.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json(customers);
   } catch (error) {
     console.error("❌ Error fetching customers:", error.message);

@@ -11,11 +11,11 @@ export const createEmployee = async (req, res) => {
       return res.status(400).json({ message: "নাম, পজিশন এবং ফোন প্রয়োজনীয়" });
     }
 
-    // ✅ একসাথে তিনটি চেকের জন্য Promise.all ব্যবহার করা হলো
+    // ✅ একসাথে তিনটি চেকের জন্য Promise.all ব্যবহার
     const [existingCustomer, existingSupplier, existingEmployee] = await Promise.all([
-      Customer.findOne({ phone, user: req.user._id }),
-      Supplier.findOne({ phone, user: req.user._id }),
-      Employee.findOne({ phone, user: req.user._id }),
+      Customer.findOne({ phone, userId: req.user._id }),
+      Supplier.findOne({ phone, userId: req.user._id }),
+      Employee.findOne({ phone, userId: req.user._id }),
     ]);
 
     if (existingCustomer || existingSupplier || existingEmployee) {
@@ -32,20 +32,20 @@ export const createEmployee = async (req, res) => {
       email,
       address,
       salary,
-      user: req.user._id, // ✅ consistent field name
-      image: req.file ? `/uploads/${req.file.filename}` : null,
+      userId: req.user._id, // ✅ ফিক্স করা হলো
+      image: req.file ? `/uploads/${req.file.filename}` : "",
     });
 
     const savedEmployee = await newEmployee.save();
     res.status(201).json({
-      message: "কর্মচারী সফলভাবে যোগ করা হয়েছে।",
+      message: "✅ কর্মচারী সফলভাবে যোগ করা হয়েছে।",
       data: savedEmployee,
     });
 
   } catch (error) {
     console.error("❌ Error creating employee:", error.message);
 
-    // ✅ MongoDB ডুপ্লিকেট key এরর হ্যান্ডেল
+    // ✅ MongoDB duplicate key handle
     if (error.code === 11000) {
       return res.status(409).json({ message: "এই নাম্বারটি আগে থেকেই রেজিস্টার করা আছে।" });
     }
@@ -59,7 +59,7 @@ export const createEmployee = async (req, res) => {
 // ✅ Get Employees
 export const getEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const employees = await Employee.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json(employees);
   } catch (error) {
     console.error("❌ Error fetching employees:", error.message);

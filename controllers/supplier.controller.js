@@ -11,11 +11,11 @@ export const createSupplier = async (req, res) => {
       return res.status(400).json({ message: "নাম এবং ফোন প্রয়োজনীয়" });
     }
 
-    // ✅ তিনটি মডেলে একসাথে চেক করা হচ্ছে
+    // ✅ একই userId এর মধ্যে ডুপ্লিকেট চেক করা
     const [existingCustomer, existingEmployee, existingSupplier] = await Promise.all([
-      Customer.findOne({ phone, user: req.user._id }),
-      Employee.findOne({ phone, user: req.user._id }),
-      Supplier.findOne({ phone, user: req.user._id }),
+      Customer.findOne({ phone, userId: req.user._id }),
+      Employee.findOne({ phone, userId: req.user._id }),
+      Supplier.findOne({ phone, userId: req.user._id }),
     ]);
 
     if (existingCustomer || existingEmployee || existingSupplier) {
@@ -31,13 +31,13 @@ export const createSupplier = async (req, res) => {
       email,
       address,
       products,
-      user: req.user._id, // ✅ consistent field name
-      image: req.file ? `/uploads/${req.file.filename}` : null,
+      userId: req.user._id, // ✅ Fix: user → userId
+      image: req.file ? `/uploads/${req.file.filename}` : "",
     });
 
     const savedSupplier = await newSupplier.save();
     res.status(201).json({
-      message: "সাপ্লায়ার সফলভাবে যোগ হয়েছে।",
+      message: "✅ সাপ্লায়ার সফলভাবে যোগ হয়েছে।",
       data: savedSupplier,
     });
 
@@ -58,7 +58,7 @@ export const createSupplier = async (req, res) => {
 // ✅ Get All Suppliers
 export const getSuppliers = async (req, res) => {
   try {
-    const suppliers = await Supplier.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const suppliers = await Supplier.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json(suppliers);
   } catch (error) {
     console.error("❌ Error fetching suppliers:", error.message);
