@@ -1,13 +1,32 @@
 import express from "express";
-import { registerUser, getUserProfile } from "../controllers/userController.js";
-import { protect } from "../middleware/authMiddleware.js"; // ✅ টোকেন চেক
+import {
+  registerUser,
+  loginUser,
+  getUserProfile,
+} from "../controllers/userController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// ✅ রেজিস্ট্রেশন API
+/**
+ * @route   POST /api/user/register
+ * @desc    Register a new user
+ * @access  Public
+ */
 router.post("/register", registerUser);
 
-// ✅ প্রোফাইল API (শুধু লগইন হলে)
+/**
+ * @route   POST /api/user/login
+ * @desc    Authenticate user and get token
+ * @access  Public
+ */
+router.post("/login", loginUser);
+
+/**
+ * @route   GET /api/user/profile
+ * @desc    Get logged-in user's profile
+ * @access  Private
+ */
 router.get("/profile", protect, getUserProfile);
 
-export default router; // ✅ ESM Export
+export default router;

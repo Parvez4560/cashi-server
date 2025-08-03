@@ -1,20 +1,20 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
 import bcrypt from "bcryptjs";
+import User from "../models/User.js"; // ✅ নিশ্চিত করুন এই মডেলেই pre-save hash হচ্ছে না
 
 const router = express.Router();
 
-// ✅ Always load JWT_SECRET from env, fallback if missing
+// ✅ JWT Settings
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_key";
 const JWT_EXPIRES_IN = "365d";
 
 // ✅ Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-};
+const generateToken = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-// ✅ Check Number
+/**
+ * ✅ Check Number Exists
+ */
 router.get("/check-number", async (req, res) => {
   const phone = req.query.number;
   if (!phone) {
@@ -23,14 +23,16 @@ router.get("/check-number", async (req, res) => {
 
   try {
     const user = await User.findOne({ phone });
-    return res.status(200).json({ exists: !!user });
+    res.status(200).json({ exists: !!user });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error" });
+    console.error("❌ Check-number error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// ✅ Register
+/**
+ * ✅ Register User
+ */
 router.post("/register", async (req, res) => {
   const {
     phone,
@@ -48,12 +50,17 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ message: "Phone and password are required" });
   }
 
+  if (!/^\d{4}$/.test(password)) {
+    return res.status(400).json({ message: "Password must be exactly 4 digits" });
+  }
+
   try {
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(409).json({ message: "User already exists" });
     }
 
+    // ✅ Hash password manually (Model এ pre-save hash থাকলে ডাবল হবে, তাই প্রি-হ্যাশ সরান)
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
@@ -88,12 +95,14 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Register error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// ✅ Login
+/**
+ * ✅ Login User
+ */
 router.post("/login", async (req, res) => {
   const { phone, password } = req.body;
 
@@ -109,7 +118,7 @@ router.post("/login", async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid password" });
+      return res.status(401).json({ message: "Invalid password" });
     }
 
     const token = generateToken(user._id);
@@ -130,7 +139,7 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Login error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
