@@ -1,18 +1,18 @@
 import express from "express";
 import multer from "multer";
 import { createSupplier, getSuppliers } from "../controllers/supplier.controller.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect } from "../middleware/authMiddleware.js";  // <-- এখানে authMiddleware.js থেকে ইম্পোর্ট
 
 const router = express.Router();
 
-// Multer storage setup with original filename preserved and timestamp added
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
-    const ext = file.originalname.split('.').pop();
-    cb(null, `supplier_${Date.now()}.${ext}`);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = file.originalname.split(".").pop();
+    cb(null, `supplier_${uniqueSuffix}.${ext}`);
   }
 });
 

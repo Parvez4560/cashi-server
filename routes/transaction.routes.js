@@ -1,16 +1,15 @@
-import express from 'express';
-import { protect } from '../middleware/authMiddleware.js';  // ধরছি আপনার auth middleware এখানে আছে
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";  // <-- authMiddleware.js
 import {
   addTransaction,
   getUserTransactions,
   getCustomerTransactions,
-} from '../controllers/transaction.controller.js'; // আপনার ট্রানজেকশন কন্ট্রোলার
+} from "../controllers/transaction.controller.js";
 
 const router = express.Router();
 
-// সমস্ত রাউট প্রটেক্টেড Middleware দিয়ে নিরাপদ করা হয়েছে
-router.post('/', protect, addTransaction); // নতুন ট্রানজেকশন যোগ করা
-router.get('/', protect, getUserTransactions); // ইউজারের সব ট্রানজেকশন
-router.get('/customer/:customerId', protect, getCustomerTransactions); // নির্দিষ্ট গ্রাহকের ট্রানজেকশন
+router.post("/", protect, addTransaction);
+router.get("/", protect, getUserTransactions);
+router.get("/customer/:customerId", protect, getCustomerTransactions);
 
 export default router;

@@ -1,22 +1,18 @@
 import express from "express";
 import Transaction from "../models/Transaction.js";
+import { protect } from "../middleware/authMiddleware.js";  // নতুন auth middleware
 
 const router = express.Router();
 
-// ✅ Simple Auth Middleware (Demo)
-const auth = (req, res, next) => {
-  // Future: JWT validation যোগ হবে
-  req.user = { id: req.headers["userid"] }; // Header এ userid পাঠাতে হবে
-  next();
-};
+// ➡️ এখন Simple auth বাদ দিয়ে protect ব্যবহার করবেন
 
 // ✅ Add Transaction
-router.post("/add", auth, async (req, res) => {
+router.post("/add", protect, async (req, res) => {
   const { type, amount, category, note, date } = req.body;
 
   try {
     const transaction = new Transaction({
-      user: req.user.id,
+      user: req.user._id,  // protect middleware থেকে ইউজার অবজেক্ট আসবে
       type,
       amount,
       category,
@@ -33,9 +29,9 @@ router.post("/add", auth, async (req, res) => {
 });
 
 // ✅ Get User Transactions
-router.get("/my", auth, async (req, res) => {
+router.get("/my", protect, async (req, res) => {
   try {
-    const transactions = await Transaction.find({ user: req.user.id }).sort({
+    const transactions = await Transaction.find({ user: req.user._id }).sort({
       date: -1,
     });
     res.json(transactions);
@@ -45,4 +41,4 @@ router.get("/my", auth, async (req, res) => {
   }
 });
 
-export default router; // ✅ অবশ্যই ESM এ এই লাইন থাকতে হবে
+export default router;
