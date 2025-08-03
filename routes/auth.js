@@ -1,20 +1,22 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import User from "../models/User.js"; // ✅ মডেল অবশ্যই .js সহ লিখতে হবে
+import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || "your_fallback_secret";
+
+// ✅ Always load JWT_SECRET from env, fallback if missing
+const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_key";
 const JWT_EXPIRES_IN = "365d";
 
-// ✅ Generate Token Function
+// ✅ Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 };
 
-// ✅ Check Account (Phone Exists) - GET with query parameter
+// ✅ Check Number
 router.get("/check-number", async (req, res) => {
-  const phone = req.query.number; // Flutter থেকে ?number= আসছে
+  const phone = req.query.number;
   if (!phone) {
     return res.status(400).json({ message: "Phone number is required" });
   }
@@ -28,7 +30,7 @@ router.get("/check-number", async (req, res) => {
   }
 });
 
-// ✅ Register (POST)
+// ✅ Register
 router.post("/register", async (req, res) => {
   const {
     phone,
@@ -91,7 +93,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ✅ Login (POST)
+// ✅ Login
 router.post("/login", async (req, res) => {
   const { phone, password } = req.body;
 
@@ -131,11 +133,6 @@ router.post("/login", async (req, res) => {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
-});
-
-// ✅ Placeholder OTP (optional)
-router.post("/send-otp", (req, res) => {
-  return res.status(200).json({ message: "OTP service coming soon!" });
 });
 
 export default router;

@@ -5,8 +5,18 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// File Upload Setup
-const upload = multer({ dest: "uploads/" });
+// Multer storage setup with original filename preserved
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    const ext = file.originalname.split('.').pop();
+    cb(null, `customer_${Date.now()}.${ext}`);
+  }
+});
+
+const upload = multer({ storage });
 
 // POST /api/customers - Create customer with logged-in userId
 router.post("/", protect, upload.single("image"), createCustomer);
