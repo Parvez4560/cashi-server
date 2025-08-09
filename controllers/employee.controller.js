@@ -33,7 +33,7 @@ export const createEmployee = async (req, res) => {
       address,
       salary,
       userId: req.user._id, // ✅ ফিক্স করা হলো
-      image: req.file ? `/uploads/${req.file.filename}` : "",
+      image: req.file ? `/uploads/employees/${req.file.filename}` : "",
     });
 
     const savedEmployee = await newEmployee.save();

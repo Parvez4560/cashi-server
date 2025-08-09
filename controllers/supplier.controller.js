@@ -32,7 +32,7 @@ export const createSupplier = async (req, res) => {
       address,
       products,
       userId: req.user._id, // ✅ Fix: user → userId
-      image: req.file ? `/uploads/${req.file.filename}` : "",
+      image: req.file ? `/uploads/suppliers/${req.file.filename}` : "",
     });
 
     const savedSupplier = await newSupplier.save();
