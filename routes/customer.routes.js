@@ -23,21 +23,28 @@ const storage = multer.diskStorage({
   }
 });
 
-const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png"];
+// Allowed image MIME types — এখানে আপনি দরকারমতো আরও যোগ করতে পারবেন
+const allowedMimeTypes = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/bmp",
+  "image/webp",
+];
 
 const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB max
+    fileSize: 5 * 1024 * 1024, // 5MB max size
   },
   fileFilter: (req, file, cb) => {
-    // Console log দিয়ে দেখুন আসল mimetype কী আসছে
     console.log("Uploaded file mimetype:", file.mimetype);
 
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("সার্ভার শুধু ইমেজ ফাইল আপলোড সমর্থন করে (jpg, jpeg, png)।"));
+      cb(new Error("সার্ভার শুধু ইমেজ ফাইল আপলোড সমর্থন করে (jpg, jpeg, png, gif, bmp, webp)।"));
     }
   }
 });
