@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
   }
 });
 
-// Allowed image MIME types — এখানে আপনি দরকারমতো আরও যোগ করতে পারবেন
+// Allowed image MIME types
 const allowedMimeTypes = [
   "image/jpeg",
   "image/jpg",
@@ -33,6 +33,16 @@ const allowedMimeTypes = [
   "image/webp",
 ];
 
+// Allowed image extensions
+const allowedExtensions = [
+  ".jpeg",
+  ".jpg",
+  ".png",
+  ".gif",
+  ".bmp",
+  ".webp",
+];
+
 const upload = multer({
   storage,
   limits: {
@@ -40,13 +50,22 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     console.log("Uploaded file mimetype:", file.mimetype);
+    const ext = path.extname(file.originalname).toLowerCase();
+    console.log("Uploaded file extension:", ext);
 
-    if (allowedMimeTypes.includes(file.mimetype)) {
+    if (
+      allowedMimeTypes.includes(file.mimetype) ||
+      (file.mimetype === "application/octet-stream" && allowedExtensions.includes(ext))
+    ) {
       cb(null, true);
     } else {
-      cb(new Error("সার্ভার শুধু ইমেজ ফাইল আপলোড সমর্থন করে (jpg, jpeg, png, gif, bmp, webp)।"));
+      cb(
+        new Error(
+          "সার্ভার শুধু ইমেজ ফাইল আপলোড সমর্থন করে (jpg, jpeg, png, gif, bmp, webp)।"
+        )
+      );
     }
-  }
+  },
 });
 
 router.post("/", protect, upload.single("image"), createCustomer);
