@@ -7,7 +7,6 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Ensure uploads directory exists
 const uploadDir = "uploads";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -19,25 +18,24 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    // Use path.extname to get proper extension including dot
-    const ext = path.extname(file.originalname);
+    const ext = path.extname(file.originalname).toLowerCase();
     cb(null, `customer_${uniqueSuffix}${ext}`);
   }
 });
 
+const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png"];
+
 const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // Max file size 5MB (optional)
+    fileSize: 5 * 1024 * 1024, // 5MB max
   },
   fileFilter: (req, file, cb) => {
-    // Optional: accept only image files (jpg, jpeg, png)
-    const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+    // Console log দিয়ে দেখুন আসল mimetype কী আসছে
+    console.log("Uploaded file mimetype:", file.mimetype);
 
-    if (extname && mimetype) {
-      return cb(null, true);
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
     } else {
       cb(new Error("সার্ভার শুধু ইমেজ ফাইল আপলোড সমর্থন করে (jpg, jpeg, png)।"));
     }
