@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      //minlength: 4,
+      minlength: 4,
       //maxlength: 4, // ✅ PIN always 4 digits
       //validate: {
         //validator: function (v) {
