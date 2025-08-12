@@ -8,14 +8,14 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 4,
-      maxlength: 4, // ✅ PIN always 4 digits
-      validate: {
-        validator: function (v) {
-          return /^\d{4}$/.test(v); // ✅ Only digits allowed
-        },
-        message: "Password must be exactly 4 digits",
-      },
+      //minlength: 4,
+      //maxlength: 4, // ✅ PIN always 4 digits
+      //validate: {
+        //validator: function (v) {
+          //return /^\d{4}$/.test(v); // ✅ Only digits allowed
+        //},
+        //message: "Password must be exactly 4 digits",
+      //},
     },
     email: { type: String, default: "", trim: true, lowercase: true },
     fatherName: { type: String, default: "", trim: true },
