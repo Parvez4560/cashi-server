@@ -68,6 +68,9 @@ import customerRoutes from "./routes/customer.routes.js";
 import employeeRoutes from "./routes/employee.routes.js";
 import supplierRoutes from "./routes/supplier.routes.js";
 
+// ** নতুন স্টোর রাউট ইমপোর্ট **
+import storeRoutes from "./routes/storeRoutes.js";
+
 // ✅ Use Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/records", recordRoutes);
@@ -77,6 +80,9 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/suppliers", supplierRoutes);
+
+// ** নতুন স্টোর রাউট যোগ করা হলো **
+app.use("/api/stores", storeRoutes);
 
 // ✅ 404 Handler
 app.use((req, res) => {
