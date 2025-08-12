@@ -3,6 +3,6 @@ import { createStore } from '../controllers/storeController.js';
 
 const router = express.Router();
 
-router.post('/', createStore);
+router.post('/create', createStore);
 
 export default router;

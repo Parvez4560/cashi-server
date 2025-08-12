@@ -82,7 +82,7 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/suppliers", supplierRoutes);
 
 // ** নতুন স্টোর রাউট যোগ করা হলো **
-app.use("/api/stores", storeRoutes);
+app.use("/api/store", storeRoutes);
 
 // ✅ 404 Handler
 app.use((req, res) => {
