@@ -62,13 +62,10 @@ router.post("/register", async (req, res) => {
       return res.status(409).json({ message: "User already exists" });
     }
 
-    // ✅ Password হ্যাশ করা (pre-save hash থাকলে সেটা সরান)
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // ইউজার তৈরি
     const user = new User({
       phone,
-      password: hashedPassword,
+      password,
       name,
       businessName,
       email,
