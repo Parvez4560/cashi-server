@@ -2,6 +2,8 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/User.js"; // ✅ নিশ্চিত করুন এই মডেলেই pre-save hash হচ্ছে না
+import Store from "../models/store.js"; // স্টোর মডেল ইমপোর্ট
+import { v4 as uuidv4 } from "uuid"; // uuid ইমপোর্ট
 
 const router = express.Router();
 
@@ -31,7 +33,7 @@ router.get("/check-number", async (req, res) => {
 });
 
 /**
- * ✅ Register User
+ * ✅ Register User + Store একসাথে তৈরি
  */
 router.post("/register", async (req, res) => {
   const {
@@ -60,9 +62,10 @@ router.post("/register", async (req, res) => {
       return res.status(409).json({ message: "User already exists" });
     }
 
-    // ✅ Hash password manually (Model এ pre-save hash থাকলে ডাবল হবে, তাই প্রি-হ্যাশ সরান)
+    // ✅ Password হ্যাশ করা (pre-save hash থাকলে সেটা সরান)
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ইউজার তৈরি
     const user = new User({
       phone,
       password: hashedPassword,
@@ -77,10 +80,23 @@ router.post("/register", async (req, res) => {
 
     await user.save();
 
+    // স্টোর তৈরি ইউজার আইডি দিয়ে
+    const store = new Store({
+      storeId: uuidv4(),
+      userId: user._id,
+      storeName: businessName || "Default Store Name",
+      address,
+      phone,
+    });
+
+    await store.save();
+
+    // টোকেন তৈরি
     const token = generateToken(user._id);
 
+    // রেসপন্স পাঠানো
     res.status(201).json({
-      message: "User registered successfully",
+      message: "User and Store registered successfully",
       token,
       user: {
         id: user._id,
@@ -92,6 +108,13 @@ router.post("/register", async (req, res) => {
         motherName: user.motherName,
         address: user.address,
         profileImage: user.profileImage,
+      },
+      store: {
+        id: store._id,
+        storeId: store.storeId,
+        storeName: store.storeName,
+        address: store.address,
+        phone: store.phone,
       },
     });
   } catch (error) {
