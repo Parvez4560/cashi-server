@@ -71,6 +71,9 @@ import supplierRoutes from "./routes/supplier.routes.js";
 // ** নতুন স্টোর রাউট ইমপোর্ট **
 import storeRoutes from "./routes/storeRoutes.js";
 
+// ** Operator Routes ইমপোর্ট **
+import operatorRoutes from "./routes/operatorRoutes.js";
+
 // ✅ Use Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/records", recordRoutes);
@@ -83,6 +86,9 @@ app.use("/api/suppliers", supplierRoutes);
 
 // ** নতুন স্টোর রাউট যোগ করা হলো **
 app.use("/api/store", storeRoutes);
+
+// ** Operator Route যোগ করা হলো **
+app.use("/api/operators", operatorRoutes);
 
 // ✅ 404 Handler
 app.use((req, res) => {
