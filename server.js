@@ -67,12 +67,10 @@ import transactionRoutes from "./routes/transaction.routes.js";
 import customerRoutes from "./routes/customer.routes.js";
 import employeeRoutes from "./routes/employee.routes.js";
 import supplierRoutes from "./routes/supplier.routes.js";
-
-// ** নতুন স্টোর রাউট ইমপোর্ট **
 import storeRoutes from "./routes/storeRoutes.js";
-
-// ** Operator Routes ইমপোর্ট **
 import operatorRoutes from "./routes/operatorRoutes.js";
+import addressRoutes from "./routes/addressRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 // ✅ Use Routes
 app.use("/api/auth", authRoutes);
@@ -83,12 +81,10 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/suppliers", supplierRoutes);
-
-// ** নতুন স্টোর রাউট যোগ করা হলো **
 app.use("/api/store", storeRoutes);
-
-// ** Operator Route যোগ করা হলো **
 app.use("/api/operators", operatorRoutes);
+app.use("/api/address", addressRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ✅ 404 Handler
 app.use((req, res) => {

@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";  // <-- authMiddleware.js
+import { protect } from "../middlewares/authMiddleware.js";  // <-- authMiddleware.js
 import {
   addTransaction,
   getUserTransactions,
