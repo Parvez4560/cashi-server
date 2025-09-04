@@ -58,33 +58,9 @@ app.get("/", (req, res) => {
   res.json({ status: "✅ Server Running", app: "Hisabi Accounting" });
 });
 
-// ✅ Import Routes
-import authRoutes from "./routes/auth.js";
-import recordRoutes from "./routes/records.js";
-import userRoutes from "./routes/userRoutes.js";
-import statsRoutes from "./routes/stats.js";
-import transactionRoutes from "./routes/transaction.routes.js";
-import customerRoutes from "./routes/customer.routes.js";
-import employeeRoutes from "./routes/employee.routes.js";
-import supplierRoutes from "./routes/supplier.routes.js";
-import storeRoutes from "./routes/storeRoutes.js";
-import operatorRoutes from "./routes/operatorRoutes.js";
-import addressRoutes from "./routes/addressRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
-
-// ✅ Use Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/records", recordRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/stats", statsRoutes);
-app.use("/api/transactions", transactionRoutes);
-app.use("/api/customers", customerRoutes);
-app.use("/api/employees", employeeRoutes);
-app.use("/api/suppliers", supplierRoutes);
-app.use("/api/store", storeRoutes);
-app.use("/api/operators", operatorRoutes);
-app.use("/api/address", addressRoutes);
-app.use("/api/admin", adminRoutes);
+// ✅ Register Routes (from routes/index.js)
+import registerRoutes from "./routes/index.js";
+registerRoutes(app);
 
 // ✅ 404 Handler
 app.use((req, res) => {

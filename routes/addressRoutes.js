@@ -9,10 +9,19 @@ import {
 
 const router = express.Router();
 
+// সব Country লিস্ট
 router.get("/countries", getCountries);
-router.get("/divisions/:countryCode", getDivisions);
-router.get("/districts/:countryCode/:divisionName", getDistricts);
-router.get("/upazilas/:countryCode/:divisionName/:districtName", getUpazilas);
-router.get("/unions/:countryCode/:divisionName/:districtName/:upazilaName", getUnions);
+
+// নির্দিষ্ট Country এর সব Division
+router.get("/divisions/:countryId", getDivisions);
+
+// নির্দিষ্ট Division এর সব District
+router.get("/districts/:divisionId", getDistricts);
+
+// নির্দিষ্ট District এর সব Upazila
+router.get("/upazilas/:districtId", getUpazilas);
+
+// নির্দিষ্ট Upazila এর সব Union
+router.get("/unions/:upazilaId", getUnions);
 
 export default router;

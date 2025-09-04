@@ -1,59 +1,67 @@
-import Country from "../models/address/Country.js";
-import Division from "../models/address/Division.js";
-import District from "../models/address/District.js";
-import Upazila from "../models/address/Upazila.js";
-import Union from "../models/address/Union.js";
+import db from "../config/db.js"; // আপনার DB connection ফাইল
 
-// সব দেশ
+// Country List
 export const getCountries = async (req, res) => {
   try {
-    const countries = await Country.find({});
-    res.json(countries);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const [rows] = await db.query("SELECT id, name, code FROM countries ORDER BY name ASC");
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching countries", error: error.message });
   }
 };
 
-// divisions by country
+// Division List (by countryId)
 export const getDivisions = async (req, res) => {
-  const { countryCode } = req.params;
   try {
-    const divisions = await Division.find({ countryCode });
-    res.json(divisions);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { countryId } = req.params;
+    const [rows] = await db.query(
+      "SELECT id, name FROM divisions WHERE country_id = ? ORDER BY name ASC",
+      [countryId]
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching divisions", error: error.message });
   }
 };
 
-// districts by country + division
+// District List (by divisionId)
 export const getDistricts = async (req, res) => {
-  const { countryCode, divisionName } = req.params;
   try {
-    const districts = await District.find({ countryCode, divisionName });
-    res.json(districts);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { divisionId } = req.params;
+    const [rows] = await db.query(
+      "SELECT id, name FROM districts WHERE division_id = ? ORDER BY name ASC",
+      [divisionId]
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching districts", error: error.message });
   }
 };
 
-// upazilas by country + division + district
+// Upazila List (by districtId)
 export const getUpazilas = async (req, res) => {
-  const { countryCode, divisionName, districtName } = req.params;
   try {
-    const upazilas = await Upazila.find({ countryCode, divisionName, districtName });
-    res.json(upazilas);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { districtId } = req.params;
+    const [rows] = await db.query(
+      "SELECT id, name FROM upazilas WHERE district_id = ? ORDER BY name ASC",
+      [districtId]
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching upazilas", error: error.message });
   }
 };
 
-// unions by country + division + district + upazila
+// Union List (by upazilaId)
 export const getUnions = async (req, res) => {
-  const { countryCode, divisionName, districtName, upazilaName } = req.params;
   try {
-    const unions = await Union.find({ countryCode, divisionName, districtName, upazilaName });
-    res.json(unions);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { upazilaId } = req.params;
+    const [rows] = await db.query(
+      "SELECT id, name FROM unions WHERE upazila_id = ? ORDER BY name ASC",
+      [upazilaId]
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching unions", error: error.message });
   }
 };
