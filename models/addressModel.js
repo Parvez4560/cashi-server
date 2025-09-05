@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const countrySchema = new mongoose.Schema({
   name: { type: String, required: true },
-  code: { type: String, required: true, unique: true },
+  code: { type: String, required: false, unique: true },
 }, { timestamps: true });
 
 const divisionSchema = new mongoose.Schema({
