@@ -1,55 +1,35 @@
-import express from "express";
-import {
-  getCountries,
-  getDivisions,
-  getDistricts,
-  getUpazilas,
-  getUnions,
-  addCountries,
-  addDivisions,
-  addDistricts,
-  addUpazilas,
-  addUnions,
-  updateCountry,
-  updateDivision,
-  updateDistrict,
-  updateUpazila,
-  updateUnion,
-  deleteCountry,
-  deleteDivision,
-  deleteDistrict,
-  deleteUpazila,
-  deleteUnion,
-} from "../controllers/addressController.js";
-
+const express = require("express");
 const router = express.Router();
+const addressController = require("../controllers/addressController");
 
-// ==================== Fetch Routes ====================
-router.get("/countries", getCountries);
-router.get("/divisions/:countryId", getDivisions);
-router.get("/districts/:divisionId", getDistricts);
-router.get("/upazilas/:districtId", getUpazilas);
-router.get("/unions/:upazilaId", getUnions);
+// Country
+router.post("/country", addressController.addCountry);
+router.get("/country", addressController.getCountries);
+router.put("/country/:id", addressController.updateCountry);
+router.delete("/country/:id", addressController.deleteCountry);
 
-// ==================== Add / Bulk Add Routes ====================
-router.post("/countries", addCountries);
-router.post("/divisions", addDivisions);
-router.post("/districts", addDistricts);
-router.post("/upazilas", addUpazilas);
-router.post("/unions", addUnions);
+// Division
+router.post("/division", addressController.addDivision);
+router.get("/division", addressController.getDivisions);
+router.put("/division/:id", addressController.updateDivision);
+router.delete("/division/:id", addressController.deleteDivision);
 
-// ==================== Update Routes ====================
-router.put("/countries/:id", updateCountry);
-router.put("/divisions/:id", updateDivision);
-router.put("/districts/:id", updateDistrict);
-router.put("/upazilas/:id", updateUpazila);
-router.put("/unions/:id", updateUnion);
+// District
+router.post("/district", addressController.addDistrict);
+router.get("/district", addressController.getDistricts);
+router.put("/district/:id", addressController.updateDistrict);
+router.delete("/district/:id", addressController.deleteDistrict);
 
-// ==================== Delete Routes ====================
-router.delete("/countries/:id", deleteCountry);
-router.delete("/divisions/:id", deleteDivision);
-router.delete("/districts/:id", deleteDistrict);
-router.delete("/upazilas/:id", deleteUpazila);
-router.delete("/unions/:id", deleteUnion);
+// Upazila
+router.post("/upazila", addressController.addUpazila);
+router.get("/upazila", addressController.getUpazilas);
+router.put("/upazila/:id", addressController.updateUpazila);
+router.delete("/upazila/:id", addressController.deleteUpazila);
 
-export default router;
+// Union
+router.post("/union", addressController.addUnion);
+router.get("/union", addressController.getUnions);
+router.put("/union/:id", addressController.updateUnion);
+router.delete("/union/:id", addressController.deleteUnion);
+
+module.exports = router;
