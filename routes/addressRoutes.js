@@ -5,23 +5,51 @@ import {
   getDistricts,
   getUpazilas,
   getUnions,
+  addCountries,
+  addDivisions,
+  addDistricts,
+  addUpazilas,
+  addUnions,
+  updateCountry,
+  updateDivision,
+  updateDistrict,
+  updateUpazila,
+  updateUnion,
+  deleteCountry,
+  deleteDivision,
+  deleteDistrict,
+  deleteUpazila,
+  deleteUnion,
 } from "../controllers/addressController.js";
 
 const router = express.Router();
 
-// সব Country লিস্ট
+// ==================== Fetch Routes ====================
 router.get("/countries", getCountries);
-
-// নির্দিষ্ট Country এর সব Division
 router.get("/divisions/:countryId", getDivisions);
-
-// নির্দিষ্ট Division এর সব District
 router.get("/districts/:divisionId", getDistricts);
-
-// নির্দিষ্ট District এর সব Upazila
 router.get("/upazilas/:districtId", getUpazilas);
-
-// নির্দিষ্ট Upazila এর সব Union
 router.get("/unions/:upazilaId", getUnions);
+
+// ==================== Add / Bulk Add Routes ====================
+router.post("/countries", addCountries);
+router.post("/divisions", addDivisions);
+router.post("/districts", addDistricts);
+router.post("/upazilas", addUpazilas);
+router.post("/unions", addUnions);
+
+// ==================== Update Routes ====================
+router.put("/countries/:id", updateCountry);
+router.put("/divisions/:id", updateDivision);
+router.put("/districts/:id", updateDistrict);
+router.put("/upazilas/:id", updateUpazila);
+router.put("/unions/:id", updateUnion);
+
+// ==================== Delete Routes ====================
+router.delete("/countries/:id", deleteCountry);
+router.delete("/divisions/:id", deleteDivision);
+router.delete("/districts/:id", deleteDistrict);
+router.delete("/upazilas/:id", deleteUpazila);
+router.delete("/unions/:id", deleteUnion);
 
 export default router;
