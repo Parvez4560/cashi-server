@@ -1,167 +1,18 @@
 import express from "express";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import User from "../models/User.js"; // ✅ নিশ্চিত করুন এই মডেলেই pre-save hash হচ্ছে না
-import Store from "../models/store.js"; // স্টোর মডেল ইমপোর্ট
-import { v4 as uuidv4 } from "uuid"; // uuid ইমপোর্ট
+import { translate } from "../utils/translator.js";
 
 const router = express.Router();
 
-// ✅ JWT Settings
-const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_key";
-const JWT_EXPIRES_IN = "365d";
+router.post("/login", (req, res) => {
+  const lang = req.headers["accept-language"] || "en";
+  const { username, password } = req.body;
 
-// ✅ Generate JWT
-const generateToken = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
-/**
- * ✅ Check Number Exists
- */
-router.get("/check-number", async (req, res) => {
-  const phone = req.query.number;
-  if (!phone) {
-    return res.status(400).json({ message: "Phone number is required" });
+  if (!username || !password) {
+    return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
   }
 
-  try {
-    const user = await User.findOne({ phone });
-    res.status(200).json({ exists: !!user });
-  } catch (error) {
-    console.error("❌ Check-number error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/**
- * ✅ Register User + Store একসাথে তৈরি
- */
-router.post("/register", async (req, res) => {
-  const {
-    phone,
-    password,
-    name = "",
-    businessName = "",
-    email = "",
-    fatherName = "",
-    motherName = "",
-    address = "",
-    profileImage = "",
-  } = req.body;
-
-  if (!phone || !password) {
-    return res.status(400).json({ message: "Phone and password are required" });
-  }
-
-  if (!/^\d{4}$/.test(password)) {
-    return res.status(400).json({ message: "Password must be exactly 4 digits" });
-  }
-
-  try {
-    const existingUser = await User.findOne({ phone });
-    if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
-    }
-
-    // ইউজার তৈরি
-    const user = new User({
-      phone,
-      password,
-      name,
-      businessName,
-      email,
-      fatherName,
-      motherName,
-      address,
-      profileImage,
-    });
-
-    await user.save();
-
-    // স্টোর তৈরি ইউজার আইডি দিয়ে
-    const store = new Store({
-      storeId: uuidv4(),
-      userId: user._id,
-      storeName: businessName || "Default Store Name",
-      address,
-      phone,
-    });
-
-    await store.save();
-
-    // টোকেন তৈরি
-    const token = generateToken(user._id);
-
-    // রেসপন্স পাঠানো
-    res.status(201).json({
-      message: "User and Store registered successfully",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        phone: user.phone,
-        businessName: user.businessName,
-        email: user.email,
-        fatherName: user.fatherName,
-        motherName: user.motherName,
-        address: user.address,
-        profileImage: user.profileImage,
-      },
-      store: {
-        id: store._id,
-        storeId: store.storeId,
-        storeName: store.storeName,
-        address: store.address,
-        phone: store.phone,
-      },
-    });
-  } catch (error) {
-    console.error("❌ Register error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/**
- * ✅ Login User
- */
-router.post("/login", async (req, res) => {
-  const { phone, password } = req.body;
-
-  if (!phone || !password) {
-    return res.status(400).json({ message: "Phone and password are required" });
-  }
-
-  try {
-    const user = await User.findOne({ phone });
-    if (!user) {
-      return res.status(404).json({ message: "No account found with this phone number" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid password" });
-    }
-
-    const token = generateToken(user._id);
-
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        phone: user.phone,
-        businessName: user.businessName,
-        email: user.email,
-        fatherName: user.fatherName,
-        motherName: user.motherName,
-        address: user.address,
-        profileImage: user.profileImage,
-      },
-    });
-  } catch (error) {
-    console.error("❌ Login error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+  // Dummy success response
+  res.json({ message: translate(lang, "success.login") });
 });
 
 export default router;

@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "invalid_request": "Invalid request",
+    "not_found": "Resource not found"
+  },
+  "success": {
+    "login": "Login successful"
+  }
+}
