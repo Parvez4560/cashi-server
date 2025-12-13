@@ -1,0 +1,43 @@
+{
+  "navbar": {
+    "home": "الرئيسية",
+    "about": "حول",
+    "contact": "اتصال",
+    "services": "خدمات",
+    "menu": "قائمة حيسابي",
+    "language": "اللغة"
+  },
+  "services": {
+    "personal": {
+      "title": "الخدمات الشخصية",
+      "profile": "الملف الشخصي",
+      "account": "الحساب",
+      "settings": "الإعدادات",
+      "support": "الدعم",
+      "notifications": "الإشعارات",
+      "messages": "الرسائل",
+      "history": "التاريخ"
+    },
+    "business": {
+      "title": "الخدمات التجارية",
+      "purchase": "شراء",
+      "sell": "بيع",
+      "printer": "طابعة",
+      "collection": "مجموعة",
+      "cash_box": "صندوق نقدي",
+      "sms": "رسائل قصيرة",
+      "service_assignment": "تعيين الخدمة",
+      "recycle_bin": "سلة المهملات"
+    },
+    "education": {
+      "title": "الخدمات التعليمية",
+      "books": "كتب",
+      "courses": "دورات",
+      "training": "تدريب",
+      "school": "مدرسة",
+      "exams": "امتحانات",
+      "assignments": "واجبات",
+      "library": "مكتبة"
+    }
+  }
+}
