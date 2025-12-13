@@ -1,43 +1,36 @@
 {
-  "navbar": {
-    "home": "الرئيسية",
-    "about": "حول",
-    "contact": "اتصال",
-    "services": "خدمات",
-    "menu": "قائمة حيسابي",
-    "language": "اللغة"
-  },
-  "services": {
-    "personal": {
-      "title": "الخدمات الشخصية",
-      "profile": "الملف الشخصي",
-      "account": "الحساب",
-      "settings": "الإعدادات",
-      "support": "الدعم",
-      "notifications": "الإشعارات",
-      "messages": "الرسائل",
-      "history": "التاريخ"
-    },
-    "business": {
-      "title": "الخدمات التجارية",
-      "purchase": "شراء",
-      "sell": "بيع",
-      "printer": "طابعة",
-      "collection": "مجموعة",
-      "cash_box": "صندوق نقدي",
-      "sms": "رسائل قصيرة",
-      "service_assignment": "تعيين الخدمة",
-      "recycle_bin": "سلة المهملات"
-    },
-    "education": {
-      "title": "الخدمات التعليمية",
-      "books": "كتب",
-      "courses": "دورات",
-      "training": "تدريب",
-      "school": "مدرسة",
-      "exams": "امتحانات",
-      "assignments": "واجبات",
-      "library": "مكتبة"
-    }
-  }
+  "invalid_request": "طلب غير صالح",
+  "not_found": "المورد غير موجود",
+  "login_successful": "تم تسجيل الدخول بنجاح",
+  "home": "الرئيسية",
+  "about": "حول",
+  "contact": "اتصال",
+  "services": "الخدمات",
+  "menu": "قائمة هيسابي",
+  "language": "اللغة",
+  "personal_services": "الخدمات الشخصية",
+  "business_services": "الخدمات التجارية",
+  "education_services": "الخدمات التعليمية",
+  "profile": "الملف الشخصي",
+  "account": "الحساب",
+  "settings": "الإعدادات",
+  "support": "الدعم",
+  "notifications": "الإشعارات",
+  "messages": "الرسائل",
+  "history": "السجل",
+  "purchase": "شراء",
+  "sell": "بيع",
+  "printer": "طابعة",
+  "collection": "جمع",
+  "cash_box": "صندوق النقد",
+  "sms": "رسائل قصيرة",
+  "service_assignment": "تعيين الخدمة",
+  "recycle_bin": "سلة المحذوفات",
+  "books": "كتب",
+  "courses": "دورات",
+  "training": "تدريب",
+  "school": "مدرسة",
+  "exams": "اختبارات",
+  "assignments": "واجبات",
+  "library": "مكتبة"
 }

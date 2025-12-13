@@ -1,43 +1,36 @@
 {
-  "navbar": {
-    "home": "হোম",
-    "about": "সম্পর্কে",
-    "contact": "যোগাযোগ",
-    "services": "সেবা",
-    "menu": "হিসাবি মেনু",
-    "language": "ভাষা"
-  },
-  "services": {
-    "personal": {
-      "title": "ব্যক্তিগত সেবা",
-      "profile": "প্রোফাইল",
-      "account": "অ্যাকাউন্ট",
-      "settings": "সেটিংস",
-      "support": "সহায়তা",
-      "notifications": "নোটিফিকেশন",
-      "messages": "বার্তা",
-      "history": "ইতিহাস"
-    },
-    "business": {
-      "title": "ব্যবসায়িক সেবা",
-      "purchase": "ক্রয়",
-      "sell": "বিক্রয়",
-      "printer": "প্রিন্টার",
-      "collection": "সংগ্রহ",
-      "cash_box": "ক্যাশ বক্স",
-      "sms": "এসএমএস",
-      "service_assignment": "সেবা বরাদ্দ",
-      "recycle_bin": "রিসাইকেল বিন"
-    },
-    "education": {
-      "title": "শিক্ষা সেবা",
-      "books": "বই",
-      "courses": "কোর্স",
-      "training": "প্রশিক্ষণ",
-      "school": "স্কুল",
-      "exams": "পরীক্ষা",
-      "assignments": "হোমওয়ার্ক",
-      "library": "লাইব্রেরি"
-    }
-  }
+  "invalid_request": "অবৈধ অনুরোধ",
+  "not_found": "সাধন পাওয়া যায়নি",
+  "login_successful": "লগইন সফল",
+  "home": "হোম",
+  "about": "সম্বন্ধে",
+  "contact": "যোগাযোগ",
+  "services": "সেবা",
+  "menu": "হিসাবি মেনু",
+  "language": "ভাষা",
+  "personal_services": "ব্যক্তিগত সেবা",
+  "business_services": "ব্যবসায়িক সেবা",
+  "education_services": "শিক্ষা সেবা",
+  "profile": "প্রোফাইল",
+  "account": "একাউন্ট",
+  "settings": "সেটিংস",
+  "support": "সাপোর্ট",
+  "notifications": "নোটিফিকেশন",
+  "messages": "বার্তা",
+  "history": "ইতিহাস",
+  "purchase": "কেনা",
+  "sell": "বিক্রি",
+  "printer": "প্রিন্টার",
+  "collection": "সংগ্রহ",
+  "cash_box": "ক্যাশ বক্স",
+  "sms": "এসএমএস",
+  "service_assignment": "সেবা বরাদ্দ",
+  "recycle_bin": "রিসাইকেল বিন",
+  "books": "বই",
+  "courses": "কোর্স",
+  "training": "প্রশিক্ষণ",
+  "school": "স্কুল",
+  "exams": "পরীক্ষা",
+  "assignments": "অ্যাসাইনমেন্ট",
+  "library": "লাইব্রেরি"
 }

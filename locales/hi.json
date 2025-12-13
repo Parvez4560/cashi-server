@@ -1,43 +1,36 @@
 {
-  "navbar": {
-    "home": "होम",
-    "about": "के बारे में",
-    "contact": "संपर्क",
-    "services": "सेवाएँ",
-    "menu": "हिसाबी मेनू",
-    "language": "भाषा"
-  },
-  "services": {
-    "personal": {
-      "title": "व्यक्तिगत सेवाएँ",
-      "profile": "प्रोफ़ाइल",
-      "account": "खाता",
-      "settings": "सेटिंग्स",
-      "support": "सहायता",
-      "notifications": "सूचनाएँ",
-      "messages": "संदेश",
-      "history": "इतिहास"
-    },
-    "business": {
-      "title": "व्यावसायिक सेवाएँ",
-      "purchase": "खरीद",
-      "sell": "बेचना",
-      "printer": "प्रिंटर",
-      "collection": "संग्रह",
-      "cash_box": "नकद बक्सा",
-      "sms": "एसएमएस",
-      "service_assignment": "सेवा असाइनमेंट",
-      "recycle_bin": "रीसायकल बिन"
-    },
-    "education": {
-      "title": "शिक्षा सेवाएँ",
-      "books": "पुस्तकें",
-      "courses": "कोर्स",
-      "training": "प्रशिक्षण",
-      "school": "स्कूल",
-      "exams": "परीक्षाएँ",
-      "assignments": "असाइनमेंट",
-      "library": "पुस्तकालय"
-    }
-  }
+  "invalid_request": "अमान्य अनुरोध",
+  "not_found": "संसाधन नहीं मिला",
+  "login_successful": "लॉगिन सफल",
+  "home": "होम",
+  "about": "हमारे बारे में",
+  "contact": "संपर्क करें",
+  "services": "सेवाएँ",
+  "menu": "हिसाबी मेनू",
+  "language": "भाषा",
+  "personal_services": "व्यक्तिगत सेवाएँ",
+  "business_services": "व्यवसायिक सेवाएँ",
+  "education_services": "शैक्षिक सेवाएँ",
+  "profile": "प्रोफ़ाइल",
+  "account": "खाता",
+  "settings": "सेटिंग्स",
+  "support": "सहायता",
+  "notifications": "सूचनाएँ",
+  "messages": "संदेश",
+  "history": "इतिहास",
+  "purchase": "खरीद",
+  "sell": "बेचना",
+  "printer": "प्रिंटर",
+  "collection": "संग्रह",
+  "cash_box": "कैश बॉक्स",
+  "sms": "एसएमएस",
+  "service_assignment": "सेवा असाइनमेंट",
+  "recycle_bin": "रीसायकल बिन",
+  "books": "पुस्तकें",
+  "courses": "कोर्स",
+  "training": "प्रशिक्षण",
+  "school": "स्कूल",
+  "exams": "परीक्षा",
+  "assignments": "असाइनमेंट्स",
+  "library": "लाइब्रेरी"
 }

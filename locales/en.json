@@ -1,50 +1,36 @@
 {
-  "errors": {
-    "invalid_request": "Invalid request",
-    "not_found": "Resource not found"
-  },
-  "success": {
-    "login": "Login successful"
-  },
-  "navbar": {
-    "home": "Home",
-    "about": "About",
-    "contact": "Contact",
-    "services": "Services",
-    "menu": "Hisabi Menu",
-    "language": "Language"
-  },
-  "services": {
-    "personal": {
-      "title": "Personal Services",
-      "profile": "Profile",
-      "account": "Account",
-      "settings": "Settings",
-      "support": "Support",
-      "notifications": "Notifications",
-      "messages": "Messages",
-      "history": "History"
-    },
-    "business": {
-      "title": "Business Services",
-      "purchase": "Purchase",
-      "sell": "Sell",
-      "printer": "Printer",
-      "collection": "Collection",
-      "cash_box": "Cash Box",
-      "sms": "SMS",
-      "service_assignment": "Service Assignment",
-      "recycle_bin": "Recycle Bin"
-    },
-    "education": {
-      "title": "Education Services",
-      "books": "Books",
-      "courses": "Courses",
-      "training": "Training",
-      "school": "School",
-      "exams": "Exams",
-      "assignments": "Assignments",
-      "library": "Library"
-    }
-  }
+  "invalid_request": "Invalid request",
+  "not_found": "Resource not found",
+  "login_successful": "Login successful",
+  "home": "Home",
+  "about": "About",
+  "contact": "Contact",
+  "services": "Services",
+  "menu": "Hisabi Menu",
+  "language": "Language",
+  "personal_services": "Personal Services",
+  "business_services": "Business Services",
+  "education_services": "Education Services",
+  "profile": "Profile",
+  "account": "Account",
+  "settings": "Settings",
+  "support": "Support",
+  "notifications": "Notifications",
+  "messages": "Messages",
+  "history": "History",
+  "purchase": "Purchase",
+  "sell": "Sell",
+  "printer": "Printer",
+  "collection": "Collection",
+  "cash_box": "Cash Box",
+  "sms": "SMS",
+  "service_assignment": "Service Assignment",
+  "recycle_bin": "Recycle Bin",
+  "books": "Books",
+  "courses": "Courses",
+  "training": "Training",
+  "school": "School",
+  "exams": "Exams",
+  "assignments": "Assignments",
+  "library": "Library"
 }
