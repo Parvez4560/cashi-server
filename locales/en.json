@@ -41,5 +41,13 @@
   "library": "Library",
   "subheadline": "Completely Free",
   "description": "Your business will be easy, save time, increase profit, and create extra earning opportunities.",
-  "hero_tagline": "Best Experience • 24/7 Expert Support"
+  "hero_tagline": "Best Experience • 24/7 Expert Support",
+
+  "how_hisabi_helps": "কিভাবে হিসাবী আপনার ব্যবসা বাড়াবে?",
+  "how_hisabi_subtitle": "ব্যবসার প্রতিটি দিক পরিচালনা করুন স্মার্টভাবে। প্রয়োজনীয় সিদ্ধান্ত নিন রিপোর্ট দেখে।",
+  "report_title": "লাভ না ক্ষতি? প্রতিদিন জানুন ব্যবসার প্রকৃত চিত্র",
+  "report_description": "প্রতিদিন, সপ্তাহ বা মাস– ব্যবসার লাভ-ক্ষতির বিস্তারিত রিপোর্ট এক জায়গায়। কোন পণ্য আপনার সবচেয়ে বেশি লাভ এনে দিচ্ছে তা সহজেই বুঝুন।",
+  "feature_1": "দৈনিক, সাপ্তাহিক ও মাসিক লাভ-ক্ষতির বিশ্লেষণ",
+  "feature_2": "পণ্যভিত্তিক আয় ও খরচ পর্যালোচনা",
+  "feature_3": "টার্গেট অনুযায়ী বিক্রয় অগ্রগতি ট্র্যাক"
 }
