@@ -42,23 +42,22 @@
   "subheadline": "Completely Free",
   "description": "Your business will be easy, save time, increase profit, and create extra earning opportunities.",
   "hero_tagline": "Best Experience • 24/7 Expert Support",
+  
+  "how_hisabi_helps": "How Hisabi Helps Grow Your Business?",
+  "how_hisabi_subtitle": "Manage every aspect of your business smartly. Make informed decisions using clear reports.",
 
-  "how_hisabi_helps": "কিভাবে হিসাবী আপনার ব্যবসা বাড়াবে?",
-  "how_hisabi_subtitle": "ব্যবসার প্রতিটি দিক পরিচালনা করুন স্মার্টভাবে। প্রয়োজনীয় সিদ্ধান্ত নিন রিপোর্ট দেখে।",
+  "card1_title": "Profit or Loss? Know Your Real Business Picture Every Day",
+  "card1_desc": "Daily, weekly, or monthly — view detailed profit and loss reports in one place. Easily identify which products bring you the most profit.",
+  "card1_f1": "Daily, weekly, and monthly profit & loss analysis",
+  "card1_f2": "Product-wise income and expense review",
+  "card1_f3": "Track sales progress based on targets",
 
-  "card1_title": "লাভ না ক্ষতি? প্রতিদিন জানুন ব্যবসার প্রকৃত চিত্র",
-  "card1_desc": "প্রতিদিন, সপ্তাহ বা মাস– ব্যবসার লাভ-ক্ষতির বিস্তারিত রিপোর্ট এক জায়গায়। কোন পণ্য আপনার সবচেয়ে বেশি লাভ এনে দিচ্ছে তা সহজেই বুঝুন।",
-  "card1_f1": "দৈনিক, সাপ্তাহিক ও মাসিক লাভ-ক্ষতির বিশ্লেষণ",
-  "card1_f2": "পণ্যভিত্তিক আয় ও খরচ পর্যালোচনা",
-  "card1_f3": "টার্গেট অনুযায়ী বিক্রয় অগ্রগতি ট্র্যাক",
-  "card2_title": "স্টক শেষ? মেয়াদ পেরিয়েছে? সবকিছুর আগেই সতর্ক হোন",
-  "card2_desc": "পণ্যের মেয়াদ, মজুদ এবং স্টক আউট – সব কিছুতে সময়মতো পাবেন অ্যালার্ট।",
-  "card2_f1": "মেয়াদোত্তীর্ণ পণ্যগুলোর ট্র্যাকিং ও আগাম সতর্কতা",
-  "card2_f2": "স্টক শেষ হওয়ার আগে সঠিক সময়ে অ্যালার্ট",
-  "card2_f3": "বিক্রয় ও চাহিদা অনুযায়ী ইনভেন্টরি ব্যবস্থাপনা",
-  "card3_title": "বাকি আদায় হবে সময়মতো – শুধু একটি রিমাইন্ডারেই",
-  "card3_desc": "পণ্যের মেয়াদ, মজুদ এবং স্টক আউট – সব কিছুতে সময়মতো পাবেন অ্যালার্ট।",
-  "card3_f1": "",
-  "card3_f2": "",
-  "card3_f3": ""
+  "card2_title": "Stock Finished? Expired Items? Get Alerts Before It Happens",
+  "card2_desc": "Receive timely alerts for product expiry, low stock, and stock-out situations.",
+  "card2_f1": "Tracking and early alerts for expired products",
+  "card2_f2": "Get alerts before stock runs out",
+  "card2_f3": "Inventory management based on sales and demand",
+
+  "card3_title": "Collect Dues on Time — Just One Reminder Is Enough",
+  "card3_desc": "Send reminders to customers and ensure timely collection of outstanding payments."
 }
