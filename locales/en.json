@@ -3,6 +3,11 @@
   "tagline_2": "Paperless, costless — Free accounting on Hisabi",
   "tagline_3": "Your business, our accounting — completely free",
   "tagline_4": "Profit and loss tracking free, your business partner Hisabi",
+
+  "404_title": "Oops!",
+  "404_message": "This page cannot be found.",
+  "go_to_home": "Go to Home",
+
   "hisabi": "Hisabi",
   "invalid_request": "Invalid request",
   "not_found": "Resource not found",
