@@ -18,6 +18,7 @@
   "country_code": "Country Code",
   "courses": "Courses",
   "day": "Day",
+  "download_hisabi_app": "Download Hisabi App",
   "education_services": "Education Services",
   "exams": "Exams",
   "first_service": "First Service",
@@ -91,6 +92,5 @@
   "card8_title": "Your Business Control Is Now in Your Hands",
   "card8_desc": "Decide what your staff can see or do — get full control with access management.",
 
-  "footer_description": "The best app to grow your business - sales, stock, accounting all in one place, with opportunities to increase income.",
-  "download_hisabi_app": "Download Hisabi App"
+  "footer_description": "The best app to grow your business - sales, stock, accounting all in one place, with opportunities to increase income."
 }
