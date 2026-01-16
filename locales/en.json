@@ -61,10 +61,14 @@
   "store": "Store",
   "sms": "SMS",
   "support": "Support",
-  "todays_due": "Today's Due",
-  "todays_expense": "Today's Expense",
-  "todays_income": "Today's Income",
-  "todays_sale": "Today's sale",
+  "this_month_due": "This Month's Due",
+  "this_month_expense": "This Month's Expense",
+  "this_month_profit": "This Month's Profit",
+  "this_month_sales": "This Month's Sales",
+  "today_due": "Today's Due",
+  "today_expense": "Today's Expense",
+  "today_profit": "Today's Profit",
+  "today_sale": "Today's sale",
   "training": "Training",
 
 
