@@ -23,7 +23,7 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 // MongoDB Connection
 mongoose.set("strictQuery", false);
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Prohor Database connected successfully"))
+  .then(() => console.log("✅ CashI Database connected successfully"))
   .catch((err) => console.error("❌ MongoDB Error:", err.message));
 
 // Routes Registration
@@ -39,4 +39,4 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Prohor Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 CashI Server running on port ${PORT}`));
