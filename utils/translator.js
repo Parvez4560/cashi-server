@@ -1,18 +1,18 @@
 import fs from "fs";
 import path from "path";
 
-const cache = {};
-
-export const translate = (lang, key) => {
-  if (!lang) lang = "en";
-  if (!cache[lang]) {
+export function translate(lang, key) {
+  try {
     const filePath = path.join(process.cwd(), "locales", `${lang}.json`);
-    if (fs.existsSync(filePath)) {
-      cache[lang] = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    } else {
-      cache[lang] = {};
-    }
+    let rawData = fs.existsSync(filePath) 
+      ? fs.readFileSync(filePath, "utf-8") 
+      : fs.readFileSync(path.join(process.cwd(), "locales", "en.json"), "utf-8"); // ডিফল্ট ইংরেজি
+    
+    const translations = JSON.parse(rawData);
+    
+    // ডট নোটেশন হ্যান্ডেল করার জন্য (যেমন: "errors.invalid_request")
+    return key.split(".").reduce((obj, k) => (obj ? obj[k] : null), translations) || key;
+  } catch (err) {
+    return key;
   }
-  const keys = key.split(".");
-  return keys.reduce((obj, k) => obj?.[k], cache[lang]) || key;
-};
+}

@@ -18,25 +18,25 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 // Rate limiter
-app.use(rateLimit({ windowMs: 15*60*1000, max: 100 }));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
-// MongoDB
+// MongoDB Connection
 mongoose.set("strictQuery", false);
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
+  .then(() => console.log("✅ Prohor Database connected successfully"))
   .catch((err) => console.error("❌ MongoDB Error:", err.message));
 
-// Routes
+// Routes Registration
 registerRoutes(app);
 
-// 404
+// 404 Route Handler
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));
 
-// Global Error
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: "Internal Server Error" });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Prohor Server running on port ${PORT}`));
