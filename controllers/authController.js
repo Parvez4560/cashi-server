@@ -1,5 +1,6 @@
 import Account from "../models/Account.js";
 import { translate } from "../utils/translator.js";
+import mongoose from "mongoose";
 
 // ইউজার লগইন কন্ট্রোলার
 export const loginUser = async (req, res) => {
@@ -32,7 +33,7 @@ const generateCustomerId = async (accountType) => {
   return customerId;
 };
 
-// মার্চেন্ট/ইউজার রেজিস্ট্রেশন কন্ট্রোলার (ডকুমেন্টস এবং ইন-বিল্ড ব্যালেন্স সহ)
+// মার্চেন্ট/ইউজার রেজিস্ট্রেশন কন্ট্রোলার (ডকুমেন্টস, ইন-বিল্ড ব্যালেন্স এবং ক্যাটাগরি ভ্যালিডেশন সহ)
 export const registerUser = async (req, res) => {
   const lang = req.headers["accept-language"] || "en";
 
@@ -44,16 +45,32 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
     }
 
-    // ১. চেক করা এই নাম্বারে ইতোমধ্যে অ্যাকাউন্ট আছে কি না
+    const formattedAccountType = accountType.toUpperCase();
+    const subType = bodyData.subType || (formattedAccountType === "MERCHANT" ? "retail" : "standard");
+
+    // ১. ডাটাবেজের `accountcategories` কালেকশন থেকে সাব-টাইপ ভ্যালিডেশন চেক করা
+    const validCategory = await mongoose.connection.collection('accountcategories').findOne({
+      accountType: formattedAccountType,
+      subType: subType
+    });
+
+    if (!validCategory) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `অমূল্য বা ভুল সাব-টাইপ (${subType}) প্রদান করা হয়েছে। দয়া করে সঠিক ক্যাটাগরি নির্বাচন করুন।` 
+      });
+    }
+
+    // ২. চেক করা এই নাম্বারে ইতোমধ্যে অ্যাকাউন্ট আছে কি না
     const existingUser = await Account.findOne({ phone });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists with this phone number." });
     }
 
-    // ২. ১৬ ডিজিটের ইউনিক কাস্টমার আইডি তৈরি করা (এটিই মূল অ্যাকাউন্ট বা কাস্টমার আইডি)
-    const customerId = await generateCustomerId(accountType);
+    // ৩. ১৬ ডিজিটের ইউনিক কাস্টমার আইডি তৈরি করা
+    const customerId = await generateCustomerId(formattedAccountType);
 
-    // ৩. আপলোডকৃত ফাইলগুলোর ক্লাউডিনারি পাথ সংগ্রহ (Multer files)
+    // ৪. আপলোডকৃত ফাইলগুলোর ক্লাউডিনারি পাথ সংগ্রহ (Multer files)
     const files = req.files || {};
     const documentPaths = {
       nidFront: files.nidFront ? files.nidFront[0].path : null,
@@ -65,15 +82,15 @@ export const registerUser = async (req, res) => {
       tradeLicenseDoc: files.tradeLicenseDoc ? files.tradeLicenseDoc[0].path : null,
     };
 
-    // ৪. নেস্টেড অ্যাড্রেস পার্স করা (যদি স্ট্রিং আকারে আসে)
+    // ৫. নেস্টেড অ্যাড্রেস পার্স করা (যদি স্ট্রিং আকারে আসে)
     const personalAddress = typeof bodyData.personalAddress === 'string' ? JSON.parse(bodyData.personalAddress) : bodyData.personalAddress;
     const businessAddress = typeof bodyData.businessAddress === 'string' ? JSON.parse(bodyData.businessAddress) : bodyData.businessAddress;
 
-    // ৫. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা (আলাদা ওয়ালেট ছাড়াই ডিফল্ট ব্যালেন্সসহ)
+    // ৬. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা
     const newAccount = new Account({
       customerId,
-      accountType: accountType.toUpperCase(),
-      subType: bodyData.subType || (accountType.toUpperCase() === "MERCHANT" ? "retail" : "standard"),
+      accountType: formattedAccountType,
+      subType,
       phone,
       pin,
       email: bodyData.email,
@@ -90,7 +107,7 @@ export const registerUser = async (req, res) => {
       nomineeName: bodyData.nomineeName,
       nomineeRelation: bodyData.nomineeRelation,
       nomineeNid: bodyData.nomineeNid,
-      businessName: accountType.toUpperCase() === "MERCHANT" ? bodyData.businessName : undefined,
+      businessName: formattedAccountType === "MERCHANT" ? bodyData.businessName : undefined,
       businessCategory: bodyData.businessCategory,
       businessMedium: bodyData.businessMedium,
       businessAddress,
@@ -98,7 +115,7 @@ export const registerUser = async (req, res) => {
       tradeLicenseNumber: bodyData.tradeLicenseNumber,
       documents: documentPaths,
       
-      // আপনার রিকোয়ারমেন্ট অনুযায়ী শুরুতে শুধুমাত্র মেইন ব্যালেন্স (কোড 1000) শূন্য (0) থাকবে
+      // শুরুতে শুধুমাত্র মেইন ব্যালেন্স (কোড 1000) শূন্য (0) থাকবে
       balances: {
         BDT: {
           "1000": 0
@@ -118,7 +135,8 @@ export const registerUser = async (req, res) => {
       data: {
         customerId,
         phone: newAccount.phone,
-        accountType: newAccount.accountType
+        accountType: newAccount.accountType,
+        subType: newAccount.subType
       }
     });
 
