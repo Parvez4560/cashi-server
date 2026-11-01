@@ -1,5 +1,4 @@
 import Account from "../models/Account.js"; // আমাদের নতুন অ্যাকাউন্ট মডেল
-import Wallet from "../models/Wallet.js";   // আলাদা ওয়ালেট মডেল
 import { translate } from "../utils/translator.js";
 
 // ইউজার লগইন কন্ট্রোলার (আগের মতোই থাকবে)

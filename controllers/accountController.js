@@ -1,5 +1,4 @@
 import Account from "../models/Account.js";
-import Wallet from "../models/Wallet.js";
 import { translate } from "../utils/translator.js";
 
 // ইউজার লগইন কন্ট্রোলার
