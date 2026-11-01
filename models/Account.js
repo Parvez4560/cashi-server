@@ -6,7 +6,7 @@ const accountSchema = new mongoose.Schema({
   subType: { type: String, required: true }, // যেমন: retail, online ইত্যাদি
   
   phone: { type: String, required: true, unique: true, index: true },
-  pin: { type: String, required: true },
+  pin: { type: String, required: false, default: null},
   email: { type: String, required: true },
 
   ownerName: { type: String, required: true },
