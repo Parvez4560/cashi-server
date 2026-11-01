@@ -12,6 +12,7 @@ export const loginUser = async (req, res) => {
   }
 
   try {
+    // এখানে পিন ভেরিফিকেশন এবং প্রথমবার লগইনের পর নতুন পিন সেট করার লজিক যুক্ত হবে
     res.json({ message: translate(lang, "success.login"), phone });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -33,15 +34,15 @@ const generateCustomerId = async (accountType) => {
   return customerId;
 };
 
-// মার্চেন্ট/ইউজার রেজিস্ট্রেশন কন্ট্রোলার (ডকুমেন্টস, ইন-বিল্ড ব্যালেন্স এবং ক্যাটাগরি ভ্যালিডেশন সহ)
+// মার্চেন্ট/ইউজার রেজিস্ট্রেশন কন্ট্রোলার (পাসওয়ার্ড ছাড়াই শুধু পেন্ডিং ও ডকুমেন্টস সেভ হবে)
 export const registerUser = async (req, res) => {
   const lang = req.headers["accept-language"] || "en";
 
   try {
     const bodyData = req.body;
-    const { phone, pin, accountType } = bodyData;
+    const { phone, accountType } = bodyData; // এখানে আর পিন বা পাসওয়ার্ড বাধ্যতামূলক নয়
 
-    if (!phone || !pin || !accountType) {
+    if (!phone || !accountType) {
       return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
     }
 
@@ -57,7 +58,7 @@ export const registerUser = async (req, res) => {
     if (!validCategory) {
       return res.status(400).json({ 
         success: false, 
-        message: `অমূল্য বা ভুল সাব-টাইপ (${subType}) প্রদান করা হয়েছে। দয়া করে সঠিক ক্যাটাগরি নির্বাচন করুন।` 
+        message: `ভুল বা অবৈধ সাব-টাইপ (${subType}) প্রদান করা হয়েছে। দয়া করে সঠিক ক্যাটাগরি নির্বাচন করুন।` 
       });
     }
 
@@ -86,13 +87,13 @@ export const registerUser = async (req, res) => {
     const personalAddress = typeof bodyData.personalAddress === 'string' ? JSON.parse(bodyData.personalAddress) : bodyData.personalAddress;
     const businessAddress = typeof bodyData.businessAddress === 'string' ? JSON.parse(bodyData.businessAddress) : bodyData.businessAddress;
 
-    // ৬. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা
+    // ৬. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা (পাসওয়ার্ড বা পিন ফিল্ডটি খালি রাখা হলো)
     const newAccount = new Account({
       customerId,
       accountType: formattedAccountType,
       subType,
       phone,
-      pin,
+      pin: null, // অ্যাকাউন্ট একটিভ হওয়ার আগে পাসওয়ার্ড বা পিন থাকবে না
       email: bodyData.email,
       ownerName: bodyData.ownerName,
       fatherName: bodyData.fatherName,
@@ -131,7 +132,7 @@ export const registerUser = async (req, res) => {
 
     return res.status(201).json({ 
       success: true,
-      message: "Registration successful!", 
+      message: "Registration successful! Your account is pending for approval.", 
       data: {
         customerId,
         phone: newAccount.phone,
