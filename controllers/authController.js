@@ -83,9 +83,16 @@ export const registerUser = async (req, res) => {
     }
 
     const formattedAccountType = accountType.toUpperCase();
-    const subType = bodyData.subType || (formattedAccountType === "MERCHANT" ? "retail" : "standard");
 
-    // ১. সাব-টাইপ ভ্যালিডেশন চেক
+    // ১. ট্রেড লাইসেন্সের উপস্থিতি অনুযায়ী subType (retail বা micro) নির্ধারণ করা
+    let subType = bodyData.subType;
+    if (formattedAccountType === "MERCHANT") {
+      subType = bodyData.hasTradeLicense && bodyData.hasTradeLicense.toLowerCase() === 'yes' ? 'retail' : 'micro';
+    } else {
+      subType = bodyData.subType || 'standard';
+    }
+
+    // ২. ডাটাবেজের `accountcategories` কালেকশন থেকে সাব-টাইপ ভ্যালিডেশন চেক করা
     const validCategory = await mongoose.connection.collection('accountcategories').findOne({
       accountType: formattedAccountType,
       subType: subType
@@ -98,17 +105,17 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // ২. এই মোবাইল নম্বরে ইতোমধ্যে অ্যাকাউন্ট আছে কি না চেক করা
+    // ৩. এই মোবাইল নম্বরে ইতোমধ্যে অ্যাকাউন্ট আছে কি না চেক করা
     const existingUser = await Account.findOne({ mobileNumber });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists with this mobile number." });
     }
 
-    // ৩. ১৬ ডিজিটের ইউনিক অ্যাকাউন্ট আইডি এবং ভার্চুয়াল আইডি তৈরি করা
+    // ৪. ১৬ ডিজিটের ইউনিক অ্যাকাউন্ট আইডি এবং ভার্চুয়াল আইডি তৈরি করা
     const accountId = await generateAccountId(formattedAccountType);
     const virtualId = await generateVirtualId(formattedAccountType);
 
-    // ৪. আপলোডকৃত ফাইলগুলোর ক্লাউডিনারি পাথ সংগ্রহ
+    // ৫. আপলোডকৃত ফাইলগুলোর ক্লাউডিনারি পাথ সংগ্রহ
     const files = req.files || {};
     const documentPaths = {
       nidFront: files.nidFront ? files.nidFront[0].path : null,
@@ -120,18 +127,18 @@ export const registerUser = async (req, res) => {
       tradeLicenseDoc: files.tradeLicenseDoc ? files.tradeLicenseDoc[0].path : null,
     };
 
-    // ৫. নেস্টেড অ্যাড্রেস পার্স করা
+    // ৬. নেস্টেড অ্যাড্রেস পার্স করা
     const personalAddress = typeof bodyData.personalAddress === 'string' ? JSON.parse(bodyData.personalAddress) : bodyData.personalAddress;
     const businessAddress = typeof bodyData.businessAddress === 'string' ? JSON.parse(bodyData.businessAddress) : bodyData.businessAddress;
 
-    // ৬. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা
+    // ৭. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা
     const newAccount = new Account({
       accountId,
       virtualId,
       accountType: formattedAccountType,
-      subType,
+      subType, // ট্রেড লাইসেন্স অনুযায়ী নির্ধারিত 'retail' বা 'micro' এখানে সেভ হবে
       mobileNumber,
-      pin: null,
+      pin: null, // অ্যাকাউন্ট একটিভ হওয়ার আগে পিন বা পাসওয়ার্ড খালি থাকবে
       email: bodyData.email,
       ownerName: bodyData.ownerName,
       fatherName: bodyData.fatherName,
@@ -148,7 +155,7 @@ export const registerUser = async (req, res) => {
       nomineeNid: bodyData.nomineeNid,
       businessName: formattedAccountType === "MERCHANT" ? bodyData.businessName : undefined,
       businessCategory: bodyData.businessCategory,
-      businessMedium: bodyData.businessMedium,
+      businessMedium: bodyData.businessMedium, // ব্যবসার মূল মাধ্যম বা ক্যাটাগরি এখানে থাকবে
       businessAddress,
       hasTradeLicense: bodyData.hasTradeLicense,
       tradeLicenseNumber: bodyData.tradeLicenseNumber,
