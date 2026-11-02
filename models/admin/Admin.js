@@ -5,10 +5,10 @@ const adminSchema = new mongoose.Schema({
   password: { type: String, required: true },
   allowedDeviceTokens: [
     {
-      deviceName: { type: String }, // যেমন: "Computer" বা "Mobile"
-      deviceToken: { type: String }
+      deviceName: { type: String }, // যেমন: "V2419" বা "Mobile"
+      deviceToken: { type: String } // UUID বেসড সিক্রেট ডিভাইস টোকেন
     }
-  ] // কম্পিউটার ও মোবাইলের টোকেন এখানে জমা থাকবে (সর্বোচ্চ ২টি)
+  ] // রেজিস্টার্ড ডিভাইসের তালিকা (এখানে সর্বোচ্চ ১ বা ইচ্ছেমতো লিমিট রাখতে পারবেন)
 }, { timestamps: true });
 
 const Admin = mongoose.models.Admin || mongoose.model("Admin", adminSchema);

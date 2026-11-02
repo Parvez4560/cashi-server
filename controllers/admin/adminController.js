@@ -4,7 +4,12 @@ import jwt from "jsonwebtoken";
 
 export const adminLogin = async (req, res) => {
   try {
-    const { email, password, deviceToken, deviceName } = req.body; // ফ্রন্টএন্ড থেকে deviceName ও পাঠাতে হবে (যেমন: "Computer" বা "Mobile")
+    const { email, password, deviceToken, deviceName } = req.body;
+
+    // চেক করা ফ্রন্টএন্ড থেকে જરૂરી ডাটাগুলো আসছে কি না
+    if (!email || !password || !deviceToken) {
+      return res.status(400).json({ success: false, message: "ইমেইল, পাসওয়ার্ড এবং ডিভাইস টোকেন আবশ্যক!" });
+    }
 
     // ১. অ্যাডমিন খোঁজা
     const admin = await Admin.findOne({ email });
@@ -27,6 +32,7 @@ export const adminLogin = async (req, res) => {
     const existingDevice = admin.allowedDeviceTokens.find(d => d.deviceToken === deviceToken);
 
     if (!existingDevice) {
+      // এখানে লিমিট চেক করা হচ্ছে (যেমন: সর্বোচ্চ ১টি ডিভাইস রেজিস্টার্ড থাকতে পারবে)
       if (admin.allowedDeviceTokens.length < 1) {
         admin.allowedDeviceTokens.push({
           deviceName: deviceName || "Unknown Device",
@@ -42,7 +48,7 @@ export const adminLogin = async (req, res) => {
       }
     }
 
-    // ৪. JWT টোকেন তৈরি করা
+    // ৪. JWT টোকেন তৈরি করা (Access Token)
     const token = jwt.sign(
       { id: admin._id, email: admin.email, role: "admin" },
       process.env.JWT_SECRET,
