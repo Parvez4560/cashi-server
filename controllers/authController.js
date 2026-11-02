@@ -5,51 +5,87 @@ import mongoose from "mongoose";
 // ইউজার লগইন কন্ট্রোলার
 export const loginUser = async (req, res) => {
   const lang = req.headers["accept-language"] || "en";
-  const { phone, pin } = req.body;
+  const { mobileNumber, pin } = req.body;
 
-  if (!phone || !pin) {
+  if (!mobileNumber || !pin) {
     return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
   }
 
   try {
-    // এখানে পিন ভেরিফিকেশন এবং প্রথমবার লগইনের পর নতুন পিন সেট করার লজিক যুক্ত হবে
-    res.json({ message: translate(lang, "success.login"), phone });
+    res.json({ message: translate(lang, "success.login"), mobileNumber });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ১৬ ডিজিটের কাস্টমার আইডি জেনারেটর ফাংশন
-const generateCustomerId = async (accountType) => {
+// লহ অ্যালগরিদম বা চেক ডিজিট ক্যালকুলেটর (ভুল নম্বর শনাক্তকরণের জন্য)
+const calculateCheckDigit = (numberStr) => {
+  let sum = 0;
+  let shouldDouble = true;
+  for (let i = numberStr.length - 1; i >= 0; i--) {
+    let digit = parseInt(numberStr.charAt(i), 10);
+    if (shouldDouble) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+    shouldDouble = !shouldDouble;
+  }
+  return (10 - (sum % 10)) % 10;
+};
+
+// ১৬ ডিজিটের ইউনিক অ্যাকাউন্ট আইডি জেনারেটর (শুরুতে মার্চেন্ট '2021', পার্সোনাল '1010')
+const generateAccountId = async (accountType) => {
   const prefix = accountType && accountType.toUpperCase() === "MERCHANT" ? "2021" : "1010";
   let isUnique = false;
-  let customerId = "";
+  let accountId = "";
 
   while (!isUnique) {
     const randomDigits = Math.floor(100000000000 + Math.random() * 900000000000).toString();
-    customerId = prefix + randomDigits;
-    const existing = await Account.findOne({ customerId });
+    accountId = prefix + randomDigits;
+    const existing = await Account.findOne({ accountId });
     if (!existing) isUnique = true;
   }
-  return customerId;
+  return accountId;
 };
 
-// মার্চেন্ট/ইউজার রেজিস্ট্রেশন কন্ট্রোলার (পাসওয়ার্ড ছাড়াই শুধু পেন্ডিং ও ডকুমেন্টস সেভ হবে)
+// ১৬ ডিজিটের ভার্চুয়াল আইডি (Virtual ID) জেনারেটর (চেক ডিজিট সহ)
+const generateVirtualId = async (accountType) => {
+  const prefix = accountType && accountType.toUpperCase() === "MERCHANT" ? "2021" : "1010";
+  let isUnique = false;
+  let virtualId = "";
+
+  while (!isUnique) {
+    // ১৫ ডিজিটের বেস তৈরি (প্রিফিক্স + ১১ ডিজিট র‍্যান্ডম)
+    const randomMiddle = Math.floor(10000000000 + Math.random() * 90000000000).toString();
+    const base15 = prefix + randomMiddle;
+    
+    // শেষ ডিজিট হিসেবে চেক ডিজিট যুক্ত করে ১৬ ডিজিট পূর্ণ করা
+    const checkDigit = calculateCheckDigit(base15);
+    virtualId = base15 + checkDigit;
+
+    const existing = await Account.findOne({ virtualId });
+    if (!existing) isUnique = true;
+  }
+  return virtualId;
+};
+
+// মার্চেন্ট/ইউজার রেজিস্ট্রেশন কন্ট্রোলার
 export const registerUser = async (req, res) => {
   const lang = req.headers["accept-language"] || "en";
 
   try {
     const bodyData = req.body;
-    const { phone, accountType } = bodyData; // এখানে আর পিন বা পাসওয়ার্ড বাধ্যতামূলক নয়
+    const { mobileNumber, accountType } = bodyData;
 
-    if (!phone || !accountType) {
+    if (!mobileNumber || !accountType) {
       return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
     }
 
     const formattedAccountType = accountType.toUpperCase();
     const subType = bodyData.subType || (formattedAccountType === "MERCHANT" ? "retail" : "standard");
 
-    // ১. ডাটাবেজের `accountcategories` কালেকশন থেকে সাব-টাইপ ভ্যালিডেশন চেক করা
+    // ১. সাব-টাইপ ভ্যালিডেশন চেক
     const validCategory = await mongoose.connection.collection('accountcategories').findOne({
       accountType: formattedAccountType,
       subType: subType
@@ -62,16 +98,17 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // ২. চেক করা এই নাম্বারে ইতোমধ্যে অ্যাকাউন্ট আছে কি না
-    const existingUser = await Account.findOne({ phone });
+    // ২. এই মোবাইল নম্বরে ইতোমধ্যে অ্যাকাউন্ট আছে কি না চেক করা
+    const existingUser = await Account.findOne({ mobileNumber });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: "User already exists with this phone number." });
+      return res.status(400).json({ success: false, message: "User already exists with this mobile number." });
     }
 
-    // ৩. ১৬ ডিজিটের ইউনিক কাস্টমার আইডি তৈরি করা
-    const customerId = await generateCustomerId(formattedAccountType);
+    // ৩. ১৬ ডিজিটের ইউনিক অ্যাকাউন্ট আইডি এবং ভার্চুয়াল আইডি তৈরি করা
+    const accountId = await generateAccountId(formattedAccountType);
+    const virtualId = await generateVirtualId(formattedAccountType);
 
-    // ৪. আপলোডকৃত ফাইলগুলোর ক্লাউডিনারি পাথ সংগ্রহ (Multer files)
+    // ৪. আপলোডকৃত ফাইলগুলোর ক্লাউডিনারি পাথ সংগ্রহ
     const files = req.files || {};
     const documentPaths = {
       nidFront: files.nidFront ? files.nidFront[0].path : null,
@@ -83,17 +120,18 @@ export const registerUser = async (req, res) => {
       tradeLicenseDoc: files.tradeLicenseDoc ? files.tradeLicenseDoc[0].path : null,
     };
 
-    // ৫. নেস্টেড অ্যাড্রেস পার্স করা (যদি স্ট্রিং আকারে আসে)
+    // ৫. নেস্টেড অ্যাড্রেস পার্স করা
     const personalAddress = typeof bodyData.personalAddress === 'string' ? JSON.parse(bodyData.personalAddress) : bodyData.personalAddress;
     const businessAddress = typeof bodyData.businessAddress === 'string' ? JSON.parse(bodyData.businessAddress) : bodyData.businessAddress;
 
-    // ৬. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা (পাসওয়ার্ড বা পিন ফিল্ডটি খালি রাখা হলো)
+    // ৬. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা
     const newAccount = new Account({
-      customerId,
+      accountId,
+      virtualId,
       accountType: formattedAccountType,
       subType,
-      phone,
-      pin: null, // অ্যাকাউন্ট একটিভ হওয়ার আগে পাসওয়ার্ড বা পিন থাকবে না
+      mobileNumber,
+      pin: null,
       email: bodyData.email,
       ownerName: bodyData.ownerName,
       fatherName: bodyData.fatherName,
@@ -116,7 +154,6 @@ export const registerUser = async (req, res) => {
       tradeLicenseNumber: bodyData.tradeLicenseNumber,
       documents: documentPaths,
       
-      // শুরুতে শুধুমাত্র মেইন ব্যালেন্স (কোড 1000) শূন্য (0) থাকবে
       balances: {
         BDT: {
           "1000": 0
@@ -134,8 +171,9 @@ export const registerUser = async (req, res) => {
       success: true,
       message: "Registration successful! Your account is pending for approval.", 
       data: {
-        customerId,
-        phone: newAccount.phone,
+        accountId,
+        virtualId,
+        mobileNumber: newAccount.mobileNumber,
         accountType: newAccount.accountType,
         subType: newAccount.subType
       }

@@ -1,12 +1,13 @@
 import mongoose from 'mongoose';
 
 const accountSchema = new mongoose.Schema({
-  customerId: { type: String, required: true, unique: true, index: true }, // এটিই মূল অ্যাকাউন্ট বা কাস্টমার আইডি হিসেবে কাজ করবে
-  accountType: { type: String, required: true, index: true }, // যেমন: MERCHANT বা PERSONAL
-  subType: { type: String, required: true }, // যেমন: retail, online ইত্যাদি
+  accountId: { type: String, required: true, unique: true, index: true }, // মূল অ্যাকাউন্ট আইডি
+  virtualId: { type: String, required: true, unique: true, index: true }, // ১৬ ডিজিটের ভার্চুয়াল আইডি (লেনদেনের জন্য)
+  accountType: { type: String, required: true, index: true }, // MERCHANT বা PERSONAL
+  subType: { type: String, required: true }, // retail, standard ইত্যাদি
   
-  phone: { type: String, required: true, unique: true, index: true },
-  pin: { type: String, required: false, default: null},
+  mobileNumber: { type: String, required: true, unique: true, index: true },
+  pin: { type: String, required: false, default: null },
   email: { type: String, required: true },
 
   ownerName: { type: String, required: true },
@@ -51,7 +52,7 @@ const accountSchema = new mongoose.Schema({
     tradeLicenseDoc: { type: String }
   },
 
-  // 🔹 নতুন ব্যালেন্স স্ট্রাকচার (শুরুতে শুধু BDT এর মেইন ব্যালেন্স '1000' কোডে 0 থাকবে)
+  // ব্যালেন্স স্ট্রাকচার (শুরুতে শুধু BDT এর মেইন ব্যালেন্স '1000' কোডে 0 থাকবে)
   balances: {
     type: Map,
     of: {
@@ -63,17 +64,18 @@ const accountSchema = new mongoose.Schema({
     })
   },
 
-  // অ্যাকাউন্ট স্ট্যাটাস ও ট্রানজাকশন কন্ট্রোল ফ্ল্যাগসমূহ
   status: { 
     type: String, 
     enum: ['PENDING', 'ACTIVE', 'REJECTED', 'FROZEN', 'BLOCKED'], 
     default: 'PENDING', 
     index: true 
   },
-  isDebitBlocked: { type: Boolean, default: false }, // টাকা পাঠানো বন্ধ করার জন্য
-  isCreditBlocked: { type: Boolean, default: false }, // টাকা আসা বন্ধ করার জন্য
+  isDebitBlocked: { type: Boolean, default: false },
+  isCreditBlocked: { type: Boolean, default: false },
 
   createdAt: { type: Date, default: Date.now }
+}, {
+  versionKey: false // ডাটাবেজে __v ফিল্ড আসা বন্ধ করবে
 });
 
 const Account = mongoose.model('Account', accountSchema);
