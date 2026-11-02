@@ -153,6 +153,7 @@ export const registerUser = async (req, res) => {
       nomineeName: bodyData.nomineeName,
       nomineeRelation: bodyData.nomineeRelation,
       nomineeNid: bodyData.nomineeNid,
+      nomineeDob: bodyData.nomineeDob,
       businessName: formattedAccountType === "MERCHANT" ? bodyData.businessName : undefined,
       businessCategory: bodyData.businessCategory,
       businessMedium: bodyData.businessMedium, // ব্যবসার মূল মাধ্যম বা ক্যাটাগরি এখানে থাকবে

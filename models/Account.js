@@ -29,6 +29,7 @@ const accountSchema = new mongoose.Schema({
   nomineeName: { type: String },
   nomineeRelation: { type: String },
   nomineeNid: { type: String },
+  nomineeDob: { type: String },
 
   businessName: { type: String },
   businessCategory: { type: String },
