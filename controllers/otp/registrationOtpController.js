@@ -1,5 +1,5 @@
 import RegistrationOtp from '../../models/otp/registrationOtpModel.js';
-import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 
 // ১. রেজিস্ট্রেশনের জন্য ওটিপি পাঠানো
 export const sendRegistrationOtp = async (req, res) => {
@@ -9,16 +9,11 @@ export const sendRegistrationOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "Phone number is required." });
     }
 
-    // ৪ ডিজিটের র্যান্ডম ওটিপি তৈরি
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    // আগের কোনো ওটিপি থাকলে মুছে ফেলা
     await RegistrationOtp.deleteMany({ phone });
-
-    // নতুন ওটিপি সেভ করা
     await RegistrationOtp.create({ phone, otp });
 
-    // (আপনার ব্যাকগ্রাউন্ড এসএমএস গেটওয়ে অ্যাপ এই ওটিপিটি ইউজারের সিমে পাঠিয়ে দেবে)
     console.log(`[REGISTRATION OTP] Phone: ${phone} -> OTP: ${otp}`);
 
     return res.status(200).json({
@@ -32,7 +27,7 @@ export const sendRegistrationOtp = async (req, res) => {
   }
 };
 
-// ২. ওটিপি ভেরিফাই করে রেজিস্ট্রেশন টোকেন জেনারেট করা (যার মাধ্যমে ফর্ম সাবমিট হবে)
+// ২. ওটিপি ভেরিফাই করে .env এর JWT_SECRET দিয়ে ১০ মিনিটের টোকেন তৈরি করা
 export const verifyRegistrationOtp = async (req, res) => {
   try {
     const { phone, otp } = req.body;
@@ -45,8 +40,12 @@ export const verifyRegistrationOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid or expired OTP." });
     }
 
-    // ১০ মিনিটের একটি সিক্রেট ভেরিফিকেশন টোকেন তৈরি
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+    // 🔹 .env থেকে JWT_SECRET ব্যবহার করে টোকেন তৈরি (মেয়াদ ১০ মিনিট)
+    const verificationToken = jwt.sign(
+      { phone: record.phone, purpose: 'registration' },
+      process.env.JWT_SECRET,
+      { expiresIn: '10m' }
+    );
 
     record.token = verificationToken;
     record.isVerified = true;
@@ -55,7 +54,7 @@ export const verifyRegistrationOtp = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "OTP verified successfully. You can proceed with registration.",
-      verificationToken // ফ্রন্টএন্ড এই টোকেনটি সংরক্ষণ করবে এবং ফাইনাল রেজিস্ট্রেশনের সময় পাঠাবে
+      verificationToken // ফ্রন্টএন্ড এই টোকেনটি সংরক্ষণ করবে
     });
 
   } catch (error) {
