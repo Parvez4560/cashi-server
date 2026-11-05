@@ -1,7 +1,8 @@
 import RegistrationOtp from '../../models/otp/registrationOtpModel.js';
+import SmsQueue from '../../models/sms/smsQueueModel.js'; // 🔹 এসএমএস কিউ মডেল ইম্পোর্ট
 import jwt from 'jsonwebtoken';
 
-// ১. রেজিস্ট্রেশনের জন্য ওটিপি পাঠানো
+// ১. ৬-সংখ্যার ওটিপি তৈরি এবং এসএমএস কিউ-তে এন্ট্রি করা
 export const sendRegistrationOtp = async (req, res) => {
   try {
     const { phone } = req.body;
@@ -9,16 +10,26 @@ export const sendRegistrationOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "Phone number is required." });
     }
 
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    // ৬-সংখ্যার র্যান্ডম ওটিপি তৈরি
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // আগের কোনো ওটিপি থাকলে মুছে ফেলা
     await RegistrationOtp.deleteMany({ phone });
     await RegistrationOtp.create({ phone, otp });
 
-    console.log(`[REGISTRATION OTP] Phone: ${phone} -> OTP: ${otp}`);
+    // 🔹 মেসেজ তৈরি করা
+    const message = `Your CashI Merchant Registration OTP is: ${otp}. Valid for 3 minutes.`;
+
+    // 🔹 অ্যান্ড্রয়েড SMS Gateway অ্যাপের জন্য কিউ-তে সেভ করা
+    await SmsQueue.create({
+      mobileNumber: phone,
+      message: message,
+      status: 'PENDING'
+    });
 
     return res.status(200).json({
       success: true,
-      message: "Registration OTP sent successfully."
+      message: "6-digit OTP queued successfully for SMS Gateway."
     });
 
   } catch (error) {
@@ -27,7 +38,7 @@ export const sendRegistrationOtp = async (req, res) => {
   }
 };
 
-// ২. ওটিপি ভেরিফাই করে .env এর JWT_SECRET দিয়ে ১০ মিনিটের টোকেন তৈরি করা
+// ২. ওটিপি ভেরিফাই করে JWT টোকেন জেনারেট করা (মেয়াদ ১০ মিনিট)
 export const verifyRegistrationOtp = async (req, res) => {
   try {
     const { phone, otp } = req.body;
@@ -40,7 +51,6 @@ export const verifyRegistrationOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid or expired OTP." });
     }
 
-    // 🔹 .env থেকে JWT_SECRET ব্যবহার করে টোকেন তৈরি (মেয়াদ ১০ মিনিট)
     const verificationToken = jwt.sign(
       { phone: record.phone, purpose: 'registration' },
       process.env.JWT_SECRET,
@@ -53,8 +63,8 @@ export const verifyRegistrationOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "OTP verified successfully. You can proceed with registration.",
-      verificationToken // ফ্রন্টএন্ড এই টোকেনটি সংরক্ষণ করবে
+      message: "OTP verified successfully.",
+      verificationToken
     });
 
   } catch (error) {
