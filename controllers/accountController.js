@@ -1,6 +1,7 @@
 import Account from "../models/Account.js";
 import { translate } from "../utils/translator.js";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken"; // 🔹 টোকেন ভেরিফিকেশনের জন্য এটি নিশ্চিত করুন ইম্পোর্ট করা আছে
 
 // ইউজার লগইন কন্ট্রোলার
 export const loginUser = async (req, res) => {
@@ -33,22 +34,47 @@ const generateCustomerId = async (accountType) => {
   return customerId;
 };
 
-// মার্চেন্ট/ইউজার রেজিস্ট্রেশন কন্ট্রোলার (ডকুমেন্টস, ইন-বিল্ড ব্যালেন্স এবং ক্যাটাগরি ভ্যালিডেশন সহ)
+// মার্চেন্ট/ইউজার রেজিস্ট্রেশন কন্ট্রোলার (টোকেন ভেরিফিকেশন, ডকুমেন্টস, ইন-বিল্ড ব্যালেন্স এবং ক্যাটাগরি ভ্যালিডেশন সহ)
 export const registerUser = async (req, res) => {
   const lang = req.headers["accept-language"] || "en";
 
   try {
     const bodyData = req.body;
-    const { phone, pin, accountType } = bodyData;
+    const { phone, pin, accountType, verificationToken } = bodyData;
 
     if (!phone || !pin || !accountType) {
       return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
     }
 
+    // 🔹 ১. ওটিপি ভেরিফিকেশন টোকেন চেক করা
+    if (!verificationToken) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Unauthorized! মোবাইল নম্বরটি ওটিপি দিয়ে ভেরিফাই করা হয়নি।" 
+      });
+    }
+
+    // 🔹 ২. JWT টোকেন ডিকোড ও ভেরিফাই করা (মেয়াদ ও সঠিক ফোন নম্বর চেক)
+    try {
+      const decoded = jwt.verify(verificationToken, process.env.JWT_SECRET);
+      
+      if (decoded.phone !== phone || decoded.purpose !== 'registration') {
+        return res.status(400).json({ 
+          success: false, 
+          message: "ভুল বা অকার্যকর ভেরিফিকেশন টোকেন।" 
+        });
+      }
+    } catch (jwtError) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "ভেরিফিকেশন টোকেনটির মেয়াদ শেষ হয়ে গেছে। দয়া করে আবার ওটিপি ভেরিফাই করুন।" 
+      });
+    }
+
     const formattedAccountType = accountType.toUpperCase();
     const subType = bodyData.subType || (formattedAccountType === "MERCHANT" ? "retail" : "standard");
 
-    // ১. ডাটাবেজের `accountcategories` কালেকশন থেকে সাব-টাইপ ভ্যালিডেশন চেক করা
+    // ৩. ডাটাবেজের `accountcategories` কালেকশন থেকে সাব-টাইপ ভ্যালিডেশন চেক করা
     const validCategory = await mongoose.connection.collection('accountcategories').findOne({
       accountType: formattedAccountType,
       subType: subType
@@ -61,16 +87,16 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // ২. চেক করা এই নাম্বারে ইতোমধ্যে অ্যাকাউন্ট আছে কি না
+    // ৪. চেক করা এই নাম্বারে ইতোমধ্যে অ্যাকাউন্ট আছে কি না
     const existingUser = await Account.findOne({ phone });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists with this phone number." });
     }
 
-    // ৩. ১৬ ডিজিটের ইউনিক কাস্টমার আইডি তৈরি করা
+    // ৫. ১৬ ডিজিটের ইউনিক কাস্টমার আইডি তৈরি করা
     const customerId = await generateCustomerId(formattedAccountType);
 
-    // ৪. আপলোডকৃত ফাইলগুলোর ক্লাউডিনারি পাথ সংগ্রহ (Multer files)
+    // ৬. আপলোডকৃত ফাইলগুলোর ক্লাউডিনারি পাথ সংগ্রহ (Multer files)
     const files = req.files || {};
     const documentPaths = {
       nidFront: files.nidFront ? files.nidFront[0].path : null,
@@ -82,11 +108,11 @@ export const registerUser = async (req, res) => {
       tradeLicenseDoc: files.tradeLicenseDoc ? files.tradeLicenseDoc[0].path : null,
     };
 
-    // ৫. নেস্টেড অ্যাড্রেস পার্স করা (যদি স্ট্রিং আকারে আসে)
+    // ৭. নেস্টেড অ্যাড্রেস পার্স করা (যদি স্ট্রিং আকারে আসে)
     const personalAddress = typeof bodyData.personalAddress === 'string' ? JSON.parse(bodyData.personalAddress) : bodyData.personalAddress;
     const businessAddress = typeof bodyData.businessAddress === 'string' ? JSON.parse(bodyData.businessAddress) : bodyData.businessAddress;
 
-    // ৬. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা (আলাদা ওয়ালেট ছাড়াই ইন-বিল্ড ব্যালেন্সসহ)
+    // ৮. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা (আলাদা ওয়ালেট ছাড়াই ইন-বিল্ড ব্যালেন্সসহ)
     const newAccount = new Account({
       customerId,
       accountType: formattedAccountType,
@@ -99,7 +125,7 @@ export const registerUser = async (req, res) => {
       motherName: bodyData.motherName,
       spouseName: bodyData.spouseName,
       nidNumber: bodyData.nidNumber,
-      dateOfBirth: bodyData.dateOfBirth,
+      dateOfBirth: bodyData.date_of_birth || bodyData.dateOfBirth,
       gender: bodyData.gender,
       occupation: bodyData.occupation,
       monthlyIncome: bodyData.monthlyIncome,

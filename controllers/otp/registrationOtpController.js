@@ -1,5 +1,5 @@
 import RegistrationOtp from '../../models/otp/registrationOtpModel.js';
-import SmsQueue from '../../models/sms/smsQueueModel.js'; // 🔹 এসএমএস কিউ মডেল ইম্পোর্ট
+import SmsQueue from '../../models/sms/smsQueueModel.js';
 import jwt from 'jsonwebtoken';
 
 // ১. ৬-সংখ্যার ওটিপি তৈরি এবং এসএমএস কিউ-তে এন্ট্রি করা
@@ -17,10 +17,10 @@ export const sendRegistrationOtp = async (req, res) => {
     await RegistrationOtp.deleteMany({ phone });
     await RegistrationOtp.create({ phone, otp });
 
-    // 🔹 মেসেজ তৈরি করা
+    // মেসেজ তৈরি করা
     const message = `Your CashI Merchant Registration OTP is: ${otp}. Valid for 3 minutes.`;
 
-    // 🔹 অ্যান্ড্রয়েড SMS Gateway অ্যাপের জন্য কিউ-তে সেভ করা
+    // অ্যান্ড্রয়েড SMS Gateway অ্যাপের জন্য কিউ-তে সেভ করা
     await SmsQueue.create({
       mobileNumber: phone,
       message: message,
@@ -38,7 +38,7 @@ export const sendRegistrationOtp = async (req, res) => {
   }
 };
 
-// ২. ওটিপি ভেরিফাই করে JWT টোকেন জেনারেট করা (মেয়াদ ১০ মিনিট)
+// ২. ওটিপি ভেরিফাই করে JWT টোকেন জেনারেট করা (মেয়াদ এক্সপায়ার্ড ও ভুল ওটিপি আলাদা হ্যান্ডেলিং সহ)
 export const verifyRegistrationOtp = async (req, res) => {
   try {
     const { phone, otp } = req.body;
@@ -46,9 +46,24 @@ export const verifyRegistrationOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "Phone number and OTP are required." });
     }
 
-    const record = await RegistrationOtp.findOne({ phone, otp });
+    // শুধু ফোন নম্বর দিয়ে ডেটাবেজ রেকর্ড চেক করা (মডেলের expires প্রপার্টির কারণে মেয়াদ শেষ হলে এটি স্বয়ংক্রিয়ভাবে ভ্যানিশ হয়ে যায়)
+    const record = await RegistrationOtp.findOne({ phone });
+    
     if (!record) {
-      return res.status(400).json({ success: false, message: "Invalid or expired OTP." });
+      return res.status(400).json({ 
+        success: false, 
+        errorType: "EXPIRED", // 🔹 মেয়াদ শেষ বা রেকর্ড না থাকলে
+        message: "ওটিপির মেয়াদ শেষ হয়ে গেছে। দয়া করে নতুন করে ওটিপি পাঠান।" 
+      });
+    }
+
+    // ওটিপি ভুল হলে
+    if (record.otp !== otp) {
+      return res.status(400).json({ 
+        success: false, 
+        errorType: "INVALID_OTP", // 🔹 ভুল ওটিপির জন্য
+        message: "ভুল ওটিপি কোড দেওয়া হয়েছে! দয়া করে সঠিক কোডটি দিন।" 
+      });
     }
 
     const verificationToken = jwt.sign(
