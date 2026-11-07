@@ -5,8 +5,6 @@ const countryConfigSchema = new mongoose.Schema({
   countryIso: { type: String, required: true, unique: true, uppercase: true }, // যেমন: "BD"
   dialCode: { type: String, required: true },     // যেমন: "+880"
   nationalNumberLength: { type: Number, required: true },
-  leadingZeroRequired: { type: Boolean, default: true },
-  stripLeadingZeroForApi: { type: Boolean, default: true },
   placeholder: { type: String, required: true },  // যেমন: "017XXXXXXXX"
   regexPattern: { type: String, required: true }  // যেমন: "^01[3-9]\\d{8}$"
 }, { timestamps: true });
