@@ -1,8 +1,8 @@
 import Account from "../models/Account.js";
+import VirtualAccount from "../models/VirtualAccount.js";
 import { translate } from "../utils/translator.js";
 import mongoose from "mongoose";
 
-// ইউজার লগইন কন্ট্রোলার
 export const loginUser = async (req, res) => {
   const lang = req.headers["accept-language"] || "en";
   const { mobileNumber, pin } = req.body;
@@ -18,7 +18,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// লহ অ্যালগরিদম বা চেক ডিজিট ক্যালকুলেটর (ভুল নম্বর শনাক্তকরণের জন্য)
+// লুহা অ্যালগরিদম চেক ডিজিট ক্যালকুলেটর (ভার্চুয়াল আইডির জন্য)
 const calculateCheckDigit = (numberStr) => {
   let sum = 0;
   let shouldDouble = true;
@@ -34,14 +34,14 @@ const calculateCheckDigit = (numberStr) => {
   return (10 - (sum % 10)) % 10;
 };
 
-// ১৬ ডিজিটের ইউনিক অ্যাকাউন্ট আইডি জেনারেটর (শুরুতে মার্চেন্ট '2021', পার্সোনাল '1010')
+// ১. স্বাভাবিক ১২ ডিজিটের মূল অ্যাকাউন্ট আইডি জেনারেটর (কোনো চেক ডিজিট নেই)
 const generateAccountId = async (accountType) => {
-  const prefix = accountType && accountType.toUpperCase() === "MERCHANT" ? "2021" : "1010";
+  const prefix = accountType && accountType.toUpperCase() === "MERCHANT" ? "21" : "10";
   let isUnique = false;
   let accountId = "";
 
   while (!isUnique) {
-    const randomDigits = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+    const randomDigits = Math.floor(1000000000 + Math.random() * 9000000000).toString();
     accountId = prefix + randomDigits;
     const existing = await Account.findOne({ accountId });
     if (!existing) isUnique = true;
@@ -49,22 +49,19 @@ const generateAccountId = async (accountType) => {
   return accountId;
 };
 
-// ১৬ ডিজিটের ভার্চুয়াল আইডি (Virtual ID) জেনারেটর (চেক ডিজিট সহ)
+// ২. ১৬ ডিজিটের ভার্চুয়াল আইডি জেনারেটর (চেক ডিজিটসহ)
 const generateVirtualId = async (accountType) => {
   const prefix = accountType && accountType.toUpperCase() === "MERCHANT" ? "2021" : "1010";
   let isUnique = false;
   let virtualId = "";
 
   while (!isUnique) {
-    // ১৫ ডিজিটের বেস তৈরি (প্রিফিক্স + ১১ ডিজিট র‍্যান্ডম)
     const randomMiddle = Math.floor(10000000000 + Math.random() * 90000000000).toString();
     const base15 = prefix + randomMiddle;
-    
-    // শেষ ডিজিট হিসেবে চেক ডিজিট যুক্ত করে ১৬ ডিজিট পূর্ণ করা
     const checkDigit = calculateCheckDigit(base15);
     virtualId = base15 + checkDigit;
 
-    const existing = await Account.findOne({ virtualId });
+    const existing = await VirtualAccount.findOne({ virtualId });
     if (!existing) isUnique = true;
   }
   return virtualId;
@@ -77,7 +74,6 @@ export const registerUser = async (req, res) => {
   try {
     const bodyData = req.body;
     
-    // 🔹 এখানে কান্ট্রি ও লোকাল নম্বরের ফিল্ডগুলো রিসিভ করার জন্য যুক্ত করা হয়েছে
     const { 
       mobileNumber, 
       accountType, 
@@ -93,7 +89,7 @@ export const registerUser = async (req, res) => {
 
     const formattedAccountType = accountType.toUpperCase();
 
-    // ১. ট্রেড লাইসেন্সের উপস্থিতি অনুযায়ী subType (retail বা micro) নির্ধারণ করা
+    // ১. সাব-টাইপ নির্ধারণ
     let subType = bodyData.subType;
     if (formattedAccountType === "MERCHANT") {
       subType = bodyData.hasTradeLicense && bodyData.hasTradeLicense.toLowerCase() === 'yes' ? 'retail' : 'micro';
@@ -101,7 +97,7 @@ export const registerUser = async (req, res) => {
       subType = bodyData.subType || 'standard';
     }
 
-    // ২. ডাটাবেজের `accountcategories` কালেকশন থেকে সাব-টাইপ ভ্যালিডেশন চেক করা
+    // ২. ক্যাটাগরি ভ্যালিডেশন চেক
     const validCategory = await mongoose.connection.collection('accountcategories').findOne({
       accountType: formattedAccountType,
       subType: subType
@@ -114,43 +110,40 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // ৩. এই মোবাইল নম্বরে ইতোমধ্যে অ্যাকাউন্ট আছে কি না চেক করা
+    // ৩. ইউজার অলরেডি আছে কি না চেক
     const existingUser = await Account.findOne({ mobileNumber });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists with this mobile number." });
     }
 
-    // ৪. ১৬ ডিজিটের ইউনিক অ্যাকাউন্ট আইডি এবং ভার্চুয়াল আইডি তৈরি করা
+    // ৪. আইডি জেনারেট করা (১২ ডিজিটের মেইন আইডি + ১৬ ডিজিটের ভার্চুয়াল আইডি)
     const accountId = await generateAccountId(formattedAccountType);
     const virtualId = await generateVirtualId(formattedAccountType);
 
-    // ৫. আপলোডকৃত ফাইলগুলোর ক্লাউডিনারি পাথ সংগ্রহ
+    // ৫. ফাইল পাথ সংগ্রহ
     const files = req.files || {};
     const documentPaths = {
       nidFront: files.nidFront ? files.nidFront[0].path : null,
       nidBack: files.nidBack ? files.nidBack[0].path : null,
       ownerPhoto: files.ownerPhoto ? files.ownerPhoto[0].path : null,
       nomineeNidDoc: files.nomineeNidDoc ? files.nomineeNidDoc[0].path : null,
-      businessShopPhoto: files.businessShopPhoto ? files.businessShopPhoto[0].path : null,
       utilityBillDoc: files.utilityBillDoc ? files.utilityBillDoc[0].path : null,
       tradeLicenseDoc: files.tradeLicenseDoc ? files.tradeLicenseDoc[0].path : null,
     };
 
-    // ৬. নেস্টেড অ্যাড্রেস পার্স করা
     const personalAddress = typeof bodyData.personalAddress === 'string' ? JSON.parse(bodyData.personalAddress) : bodyData.personalAddress;
     const businessAddress = typeof bodyData.businessAddress === 'string' ? JSON.parse(bodyData.businessAddress) : bodyData.businessAddress;
 
-    // ৭. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা
+    // ৬. মেইন অ্যাকাউন্ট ডেটাবেজে সেভ করা (Account Collection)
     const newAccount = new Account({
       accountId,
-      virtualId,
       accountType: formattedAccountType,
       subType,
       mobileNumber,
-      countryName, // 🔹 ডেটাবেজে সফলভাবে সেভ হবে
-      countryIso,  // 🔹 ডেটাবেজে সফলভাবে সেভ হবে
-      dialCode,    // 🔹 ডেটাবেজে সফলভাবে সেভ হবে
-      localNumber, // 🔹 ডেটাবেজে সফলভাবে সেভ হবে
+      countryName,
+      countryIso,
+      dialCode,
+      localNumber,
       pin: null, 
       email: bodyData.email,
       ownerName: bodyData.ownerName,
@@ -167,33 +160,43 @@ export const registerUser = async (req, res) => {
       nomineeRelation: bodyData.nomineeRelation,
       nomineeNid: bodyData.nomineeNid,
       nomineeDob: bodyData.nomineeDob,
-      businessName: formattedAccountType === "MERCHANT" ? bodyData.businessName : undefined,
-      businessCategory: bodyData.businessCategory,
-      businessMedium: bodyData.businessMedium,
-      businessAddress,
-      hasTradeLicense: bodyData.hasTradeLicense,
-      tradeLicenseNumber: bodyData.tradeLicenseNumber,
-      documents: documentPaths,
-      
-      balances: {
-        BDT: {
-          "1000": 0
-        }
+      documents: {
+        nidFront: documentPaths.nidFront,
+        nidBack: documentPaths.nidBack,
+        ownerPhoto: documentPaths.ownerPhoto,
+        nomineeNidDoc: documentPaths.nomineeNidDoc,
+        utilityBillDoc: documentPaths.utilityBillDoc
       },
-
-      status: "PENDING",
-      isDebitBlocked: false,
-      isCreditBlocked: false
+      status: "PENDING"
     });
 
     await newAccount.save();
 
+    // ৭. প্রথম ভার্চুয়াল অ্যাকাউন্ট বা সাব-সার্ভিস ডেটাবেজে সেভ করা (VirtualAccount Collection)
+    const newVirtualAccount = new VirtualAccount({
+      virtualId,
+      accountId, // মেইন অ্যাকাউন্টের সাথে লিংক থাকল
+      brandName: bodyData.businessName || bodyData.ownerName + " Brand",
+      businessCategory: bodyData.businessCategory,
+      businessMedium: bodyData.businessMedium || "general",
+      businessAddress,
+      hasTradeLicense: bodyData.hasTradeLicense,
+      tradeLicenseNumber: bodyData.tradeLicenseNumber,
+      tradeLicenseDoc: documentPaths.tradeLicenseDoc,
+      balances: {
+        BDT: { "1000": 0 }
+      },
+      status: "ACTIVE"
+    });
+
+    await newVirtualAccount.save();
+
     return res.status(201).json({ 
       success: true,
-      message: "Registration successful! Your account is pending for approval.", 
+      message: "Registration successful! Main account and default virtual service created.", 
       data: {
-        accountId,
-        virtualId,
+        accountId,   // ১২ ডিজিট
+        virtualId,   // ১৬ ডিজিট (লেনদেনের জন্য)
         mobileNumber: newAccount.mobileNumber,
         accountType: newAccount.accountType,
         subType: newAccount.subType

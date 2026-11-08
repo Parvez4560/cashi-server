@@ -4,6 +4,7 @@ import adminRoutes from "./admin/adminRoutes.js";
 import smsRoutes from "./sms/smsRoutes.js";
 import registrationOtpRoutes from "./otp/registrationOtpRoutes.js";
 import phoneRulesRoutes from './phone-rules/phoneRulesRoutes.js';
+import virtualAccountRoutes from './virtualAccountRoutes.js';
 
 export default function registerRoutes(app) {
   app.use("/account", authRoutes);
@@ -12,4 +13,5 @@ export default function registerRoutes(app) {
   app.use("/api/sms", smsRoutes);
   app.use("/api/otp/registration", registrationOtpRoutes)
   app.use('/api/countries', phoneRulesRoutes);
+  app.use('/api/virtual-accounts', virtualAccountRoutes);
 }

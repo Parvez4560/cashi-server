@@ -1,12 +1,11 @@
 import mongoose from 'mongoose';
 
 const accountSchema = new mongoose.Schema({
-  accountId: { type: String, required: true, unique: true, index: true }, // মূল অ্যাকাউন্ট আইডি
-  virtualId: { type: String, required: true, unique: true, index: true }, // ১৬ ডিজিটের ভার্চুয়াল আইডি (লেনদেনের জন্য)
+  accountId: { type: String, required: true, unique: true, index: true }, // ১২ ডিজিটের মূল অ্যাকাউন্ট আইডি
   accountType: { type: String, required: true, index: true }, // MERCHANT বা PERSONAL
-  subType: { type: String, required: true }, // retail, standard ইত্যাদি
+  subType: { type: String, required: true }, // retail, micro, standard ইত্যাদি
   
-  mobileNumber: { type: String, required: true, unique: true, index: true }, // 🔹 আন্তর্জাতিক ফরম্যাট (+88017...) এখানে সেভ হবে
+  mobileNumber: { type: String, required: true, unique: true, index: true },
   localNumber: { type: String },
   countryName: { type: String },
   countryIso: { type: String },
@@ -35,37 +34,12 @@ const accountSchema = new mongoose.Schema({
   nomineeNid: { type: String },
   nomineeDob: { type: String },
 
-  businessName: { type: String },
-  businessCategory: { type: String },
-  businessMedium: { type: String },
-  businessAddress: {
-    division: String,
-    district: String,
-    upazila: String,
-    holdingOrVillage: String
-  },
-  hasTradeLicense: { type: String, default: 'no' },
-  tradeLicenseNumber: { type: String },
-
   documents: {
     nidFront: { type: String },
     nidBack: { type: String },
     ownerPhoto: { type: String },
     nomineeNidDoc: { type: String },
-    businessShopPhoto: { type: String },
-    utilityBillDoc: { type: String },
-    tradeLicenseDoc: { type: String }
-  },
-
-  balances: {
-    type: Map,
-    of: {
-      type: Map,
-      of: Number
-    },
-    default: () => ({
-      BDT: { "1000": 0 }
-    })
+    utilityBillDoc: { type: String }
   },
 
   status: { 
@@ -74,8 +48,6 @@ const accountSchema = new mongoose.Schema({
     default: 'PENDING', 
     index: true 
   },
-  isDebitBlocked: { type: Boolean, default: false },
-  isCreditBlocked: { type: Boolean, default: false },
 
   createdAt: { type: Date, default: Date.now }
 }, {
