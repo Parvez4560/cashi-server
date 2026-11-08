@@ -6,7 +6,7 @@ const accountSchema = new mongoose.Schema({
   accountType: { type: String, required: true, index: true }, // MERCHANT বা PERSONAL
   subType: { type: String, required: true }, // retail, standard ইত্যাদি
   
-  mobileNumber: { type: String, required: true, unique: true, index: true },
+  mobileNumber: { type: String, required: true, unique: true, index: true }, // 🔹 আন্তর্জাতিক ফরম্যাট (+88017...) এখানে সেভ হবে
   pin: { type: String, required: false, default: null },
   email: { type: String, required: true },
 
@@ -53,7 +53,6 @@ const accountSchema = new mongoose.Schema({
     tradeLicenseDoc: { type: String }
   },
 
-  // ব্যালেন্স স্ট্রাকচার (শুরুতে শুধু BDT এর মেইন ব্যালেন্স '1000' কোডে 0 থাকবে)
   balances: {
     type: Map,
     of: {
@@ -76,7 +75,7 @@ const accountSchema = new mongoose.Schema({
 
   createdAt: { type: Date, default: Date.now }
 }, {
-  versionKey: false // ডাটাবেজে __v ফিল্ড আসা বন্ধ করবে
+  versionKey: false
 });
 
 const Account = mongoose.model('Account', accountSchema);
