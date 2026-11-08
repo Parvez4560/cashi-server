@@ -4,7 +4,7 @@ const accountSchema = new mongoose.Schema({
   accountId: { type: String, required: true, unique: true, index: true }, // ১২ ডিজিটের মূল অ্যাকাউন্ট আইডি
   accountType: { type: String, required: true, index: true }, // MERCHANT বা PERSONAL
   subType: { type: String, required: true }, // retail, micro, standard ইত্যাদি
-  
+  companyName: { type: String, required: function() { return this.accountType === 'MERCHANT'; } },
   mobileNumber: { type: String, required: true, unique: true, index: true },
   localNumber: { type: String },
   countryName: { type: String },
