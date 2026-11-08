@@ -139,6 +139,7 @@ export const registerUser = async (req, res) => {
       accountId,
       accountType: formattedAccountType,
       subType,
+      companyName: formattedAccountType === "MERCHANT" ? (bodyData.companyName || bodyData.businessName || bodyData.ownerName || "Merchant Company") : undefined,
       mobileNumber,
       countryName,
       countryIso,
@@ -186,6 +187,7 @@ export const registerUser = async (req, res) => {
       balances: {
         BDT: { "1000": 0 }
       },
+      isDefault: true, // মোবাইল নম্বর ভিত্তিক সরাসরি লেনদেনের জন্য এটি ডিফল্ট হিসেবে থাকবে
       status: "ACTIVE"
     });
 
