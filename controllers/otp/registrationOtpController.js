@@ -5,24 +5,24 @@ import jwt from 'jsonwebtoken';
 // ১. ৬-সংখ্যার ওটিপি তৈরি এবং এসএমএস কিউ-তে এন্ট্রি করা
 export const sendRegistrationOtp = async (req, res) => {
   try {
-    const { phone } = req.body;
-    if (!phone) {
-      return res.status(400).json({ success: false, message: "Phone number is required." });
+    const { mobileNumber } = req.body;
+    if (!mobileNumber) {
+      return res.status(400).json({ success: false, message: "Mobile number is required." });
     }
 
     // ৬-সংখ্যার র্যান্ডম ওটিপি তৈরি
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // আগের কোনো ওটিপি থাকলে মুছে ফেলা
-    await RegistrationOtp.deleteMany({ phone });
-    await RegistrationOtp.create({ phone, otp });
+    await RegistrationOtp.deleteMany({ mobileNumber });
+    await RegistrationOtp.create({ mobileNumber, otp });
 
     // মেসেজ তৈরি করা
     const message = `Your CashI Merchant Registration OTP is: ${otp}. Valid for 3 minutes.`;
 
     // অ্যান্ড্রয়েড SMS Gateway অ্যাপের জন্য কিউ-তে সেভ করা
     await SmsQueue.create({
-      mobileNumber: phone,
+      mobileNumber: mobileNumber,
       message: message,
       status: 'PENDING'
     });
@@ -41,13 +41,13 @@ export const sendRegistrationOtp = async (req, res) => {
 // ২. ওটিপি ভেরিফাই করে JWT টোকেন জেনারেট করা (মেয়াদ এক্সপায়ার্ড ও ভুল ওটিপি আলাদা হ্যান্ডেলিং সহ)
 export const verifyRegistrationOtp = async (req, res) => {
   try {
-    const { phone, otp } = req.body;
-    if (!phone || !otp) {
-      return res.status(400).json({ success: false, message: "Phone number and OTP are required." });
+    const { mobileNumber, otp } = req.body;
+    if (!mobileNumber || !otp) {
+      return res.status(400).json({ success: false, message: "Mobile number and OTP are required." });
     }
 
-    // শুধু ফোন নম্বর দিয়ে ডেটাবেজ রেকর্ড চেক করা (মডেলের expires প্রপার্টির কারণে মেয়াদ শেষ হলে এটি স্বয়ংক্রিয়ভাবে ভ্যানিশ হয়ে যায়)
-    const record = await RegistrationOtp.findOne({ phone });
+    // শুধু মোবাইল নম্বর দিয়ে ডেটাবেজ রেকর্ড চেক করা (মডেলের expires প্রপার্টির কারণে মেয়াদ শেষ হলে এটি স্বয়ংক্রিয়ভাবে ভ্যানিশ হয়ে যায়)
+    const record = await RegistrationOtp.findOne({ mobileNumber });
     
     if (!record) {
       return res.status(400).json({ 
@@ -67,7 +67,7 @@ export const verifyRegistrationOtp = async (req, res) => {
     }
 
     const verificationToken = jwt.sign(
-      { phone: record.phone, purpose: 'registration' },
+      { mobileNumber: record.mobileNumber, purpose: 'registration' },
       process.env.JWT_SECRET,
       { expiresIn: '10m' }
     );
