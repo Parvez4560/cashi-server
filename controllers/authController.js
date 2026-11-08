@@ -76,7 +76,16 @@ export const registerUser = async (req, res) => {
 
   try {
     const bodyData = req.body;
-    const { mobileNumber, accountType } = bodyData;
+    
+    // 🔹 এখানে কান্ট্রি ও লোকাল নম্বরের ফিল্ডগুলো রিসিভ করার জন্য যুক্ত করা হয়েছে
+    const { 
+      mobileNumber, 
+      accountType, 
+      countryName, 
+      countryIso, 
+      dialCode, 
+      localNumber 
+    } = bodyData;
 
     if (!mobileNumber || !accountType) {
       return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
@@ -136,13 +145,13 @@ export const registerUser = async (req, res) => {
       accountId,
       virtualId,
       accountType: formattedAccountType,
-      subType, // ট্রেড লাইসেন্স অনুযায়ী নির্ধারিত 'retail' বা 'micro' এখানে সেভ হবে
+      subType,
       mobileNumber,
-      countryName, 
-      countryIso, 
-      dialCode, 
-      localNumber,
-      pin: null, // অ্যাকাউন্ট একটিভ হওয়ার আগে পিন বা পাসওয়ার্ড খালি থাকবে
+      countryName, // 🔹 ডেটাবেজে সফলভাবে সেভ হবে
+      countryIso,  // 🔹 ডেটাবেজে সফলভাবে সেভ হবে
+      dialCode,    // 🔹 ডেটাবেজে সফলভাবে সেভ হবে
+      localNumber, // 🔹 ডেটাবেজে সফলভাবে সেভ হবে
+      pin: null, 
       email: bodyData.email,
       ownerName: bodyData.ownerName,
       fatherName: bodyData.fatherName,
@@ -160,7 +169,7 @@ export const registerUser = async (req, res) => {
       nomineeDob: bodyData.nomineeDob,
       businessName: formattedAccountType === "MERCHANT" ? bodyData.businessName : undefined,
       businessCategory: bodyData.businessCategory,
-      businessMedium: bodyData.businessMedium, // ব্যবসার মূল মাধ্যম বা ক্যাটাগরি এখানে থাকবে
+      businessMedium: bodyData.businessMedium,
       businessAddress,
       hasTradeLicense: bodyData.hasTradeLicense,
       tradeLicenseNumber: bodyData.tradeLicenseNumber,
