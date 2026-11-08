@@ -66,6 +66,7 @@ export const createVirtualService = async (req, res) => {
       balances: {
         BDT: { "1000": 0 }
       },
+      isDefault: true,
       status: "ACTIVE"
     });
 

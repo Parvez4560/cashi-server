@@ -20,6 +20,8 @@ const virtualAccountSchema = new mongoose.Schema({
     })
   },
 
+  isDefault: { type: Boolean, default: false, index: true },
+
   status: { type: String, enum: ['PENDING', 'ACTIVE', 'BLOCKED'], default: 'ACTIVE', index: true },
   isDebitBlocked: { type: Boolean, default: false },
   isCreditBlocked: { type: Boolean, default: false },
