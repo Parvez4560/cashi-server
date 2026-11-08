@@ -138,6 +138,10 @@ export const registerUser = async (req, res) => {
       accountType: formattedAccountType,
       subType, // ট্রেড লাইসেন্স অনুযায়ী নির্ধারিত 'retail' বা 'micro' এখানে সেভ হবে
       mobileNumber,
+      countryName, 
+      countryIso, 
+      dialCode, 
+      localNumber,
       pin: null, // অ্যাকাউন্ট একটিভ হওয়ার আগে পিন বা পাসওয়ার্ড খালি থাকবে
       email: bodyData.email,
       ownerName: bodyData.ownerName,
