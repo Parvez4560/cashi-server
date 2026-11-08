@@ -7,6 +7,10 @@ const accountSchema = new mongoose.Schema({
   subType: { type: String, required: true }, // retail, standard ইত্যাদি
   
   mobileNumber: { type: String, required: true, unique: true, index: true }, // 🔹 আন্তর্জাতিক ফরম্যাট (+88017...) এখানে সেভ হবে
+  localNumber: { type: String },
+  countryName: { type: String },
+  countryIso: { type: String },
+  dialCode: { type: String },
   pin: { type: String, required: false, default: null },
   email: { type: String, required: true },
 

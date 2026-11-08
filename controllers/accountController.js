@@ -50,7 +50,16 @@ export const registerUser = async (req, res) => {
 
   try {
     const bodyData = req.body;
-    const { mobileNumber, pin, accountType, verificationToken } = bodyData;
+    const { 
+      mobileNumber, 
+      pin, 
+      accountType, 
+      verificationToken, 
+      countryName, 
+      countryIso, 
+      dialCode, 
+      localNumber 
+    } = bodyData;
 
     if (!mobileNumber || !pin || !accountType) {
       return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
@@ -128,7 +137,11 @@ export const registerUser = async (req, res) => {
       virtualId,
       accountType: formattedAccountType,
       subType,
-      mobileNumber,
+      mobileNumber, 
+      countryName, 
+      countryIso, 
+      dialCode, 
+      localNumber,
       pin,
       email: bodyData.email,
       ownerName: bodyData.ownerName,
