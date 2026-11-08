@@ -6,14 +6,13 @@ import jwt from "jsonwebtoken";
 // ইউজার লগইন কন্ট্রোলার
 export const loginUser = async (req, res) => {
   const lang = req.headers["accept-language"] || "en";
-  const { mobileNumber, pin } = req.body; // 🔹 phone এর বদলে mobileNumber
+  const { mobileNumber, pin } = req.body;
 
   if (!mobileNumber || !pin) {
     return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
   }
 
   try {
-    // এখানে মোবাইল নম্বর দিয়ে অ্যাকাউন্ট খুঁজে লগইন হ্যান্ডেল করতে পারেন
     const user = await Account.findOne({ mobileNumber });
     if (!user) {
       return res.status(404).json({ success: false, message: "Account not found with this mobile number." });
@@ -51,13 +50,13 @@ export const registerUser = async (req, res) => {
 
   try {
     const bodyData = req.body;
-    const { mobileNumber, pin, accountType, verificationToken } = bodyData; // 🔹 phone এর বদলে mobileNumber
+    const { mobileNumber, pin, accountType, verificationToken } = bodyData;
 
     if (!mobileNumber || !pin || !accountType) {
       return res.status(400).json({ message: translate(lang, "errors.invalid_request") });
     }
 
-    // 🔹 ১. ওটিপি ভেরিফিকেশন টোকেন চেক করা
+    // ১. ওটিপি ভেরিফিকেশন টোকেন চেক করা
     if (!verificationToken) {
       return res.status(400).json({ 
         success: false, 
@@ -65,11 +64,10 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // 🔹 ২. JWT টোকেন ডিকোড ও ভেরিফাই করা
+    // ২. JWT টোকেন ডিকোড ও ভেরিফাই করা
     try {
       const decoded = jwt.verify(verificationToken, process.env.JWT_SECRET);
       
-      // টোকেনের ভেতরে mobileNumber চেক করা হচ্ছে
       if (decoded.mobileNumber !== mobileNumber || decoded.purpose !== 'registration') {
         return res.status(400).json({ 
           success: false, 
@@ -124,13 +122,13 @@ export const registerUser = async (req, res) => {
     const personalAddress = typeof bodyData.personalAddress === 'string' ? JSON.parse(bodyData.personalAddress) : bodyData.personalAddress;
     const businessAddress = typeof bodyData.businessAddress === 'string' ? JSON.parse(bodyData.businessAddress) : bodyData.businessAddress;
 
-    // ৮. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা (accountId, virtualId এবং mobileNumber সহ)
+    // ৮. নতুন অ্যাকাউন্ট ডেটাবেজে সেভ করা
     const newAccount = new Account({
       accountId,
       virtualId,
       accountType: formattedAccountType,
       subType,
-      mobileNumber, // 🔹 সঠিক ফিল্ডে ফুল ইন্টারন্যাশনাল নম্বর সেভ হচ্ছে
+      mobileNumber,
       pin,
       email: bodyData.email,
       ownerName: bodyData.ownerName,
@@ -138,7 +136,7 @@ export const registerUser = async (req, res) => {
       motherName: bodyData.motherName,
       spouseName: bodyData.spouseName,
       nidNumber: bodyData.nidNumber,
-      dateOfBirth: bodyData.date_of_birth || bodyData.dateOfBirth,
+      dateOfBirth: bodyData.dateOfBirth,
       gender: bodyData.gender,
       occupation: bodyData.occupation,
       monthlyIncome: bodyData.monthlyIncome,
@@ -146,6 +144,7 @@ export const registerUser = async (req, res) => {
       nomineeName: bodyData.nomineeName,
       nomineeRelation: bodyData.nomineeRelation,
       nomineeNid: bodyData.nomineeNid,
+      nomineeDob: bodyData.nomineeDob,
       businessName: formattedAccountType === "MERCHANT" ? bodyData.businessName : undefined,
       businessCategory: bodyData.businessCategory,
       businessMedium: bodyData.businessMedium,
