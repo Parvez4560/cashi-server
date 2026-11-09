@@ -71,7 +71,13 @@ export const createVirtualService = async (req, res) => {
     });
 
     await newService.save();
-
+    
+    // নতুন ভার্চুয়াল সার্ভিস তৈরির সময় মেইন অ্যাকাউন্টের লিস্টে যুক্ত করা:
+    await Account.findOneAndUpdate(
+      { accountId: accountId },
+      { $push: { virtualIds: virtualId } }
+   );
+   
     return res.status(201).json({
       success: true,
       message: "New virtual service created successfully.",

@@ -12,7 +12,8 @@ const accountSchema = new mongoose.Schema({
   dialCode: { type: String },
   pin: { type: String, required: false, default: null },
   email: { type: String, required: true },
-
+  virtualIds: [{ type: String }], // সমস্ত ভার্চুয়াল আইডির সিম্পল লিস্ট
+  defaultVirtualId: { type: String, default: null }, // নাম্বারের মাধ্যমে পেমেন্ট আসলে সুনির্দিষ্টভাবে এই আইডিতেই জমা হবে
   ownerName: { type: String, required: true },
   fatherName: { type: String },
   motherName: { type: String },

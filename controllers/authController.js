@@ -187,11 +187,20 @@ export const registerUser = async (req, res) => {
       balances: {
         BDT: { "1000": 0 }
       },
-      isDefault: true, // মোবাইল নম্বর ভিত্তিক সরাসরি লেনদেনের জন্য এটি ডিফল্ট হিসেবে থাকবে
+      isDefault: true,
       status: "ACTIVE"
     });
 
     await newVirtualAccount.save();
+
+    // 🔹 ৮. মেইন অ্যাকাউন্টের সাথে ভার্চুয়াল আইডি লিস্ট এবং ডিফল্ট আইডি সেট করা
+    await Account.findOneAndUpdate(
+      { accountId: accountId },
+      { 
+        $push: { virtualIds: virtualId },
+        defaultVirtualId: virtualId // প্রথম আইডিটিই অটোমেটিক ডিফল্ট হয়ে থাকবে
+      }
+    );
 
     return res.status(201).json({ 
       success: true,
