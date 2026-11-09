@@ -53,7 +53,7 @@ export const createVirtualService = async (req, res) => {
     // ২. নতুন ১৬ ডিজিটের ভার্চুয়াল আইডি তৈরি
     const virtualId = await generateVirtualId(parentAccount.accountType);
 
-    // ৩. নতুন ভার্চুয়াল অ্যাকাউন্ট সেভ করা
+    // ৩. নতুন ভার্চুয়াল অ্যাকাউন্ট সেভ করা (এখানে আর isDefault: true দেওয়ার প্রয়োজন নেই)
     const newService = new VirtualAccount({
       virtualId,
       accountId,
@@ -66,17 +66,16 @@ export const createVirtualService = async (req, res) => {
       balances: {
         BDT: { "1000": 0 }
       },
-      isDefault: true,
       status: "ACTIVE"
     });
 
     await newService.save();
     
-    // নতুন ভার্চুয়াল সার্ভিস তৈরির সময় মেইন অ্যাকাউন্টের লিস্টে যুক্ত করা:
+    // ৪. নতুন ভার্চুয়াল সার্ভিস তৈরির সময় মেইন অ্যাকাউন্টের লিস্টে যুক্ত করা:
     await Account.findOneAndUpdate(
       { accountId: accountId },
       { $push: { virtualIds: virtualId } }
-   );
+    );
    
     return res.status(201).json({
       success: true,
