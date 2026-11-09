@@ -34,18 +34,36 @@ const calculateCheckDigit = (numberStr) => {
   return (10 - (sum % 10)) % 10;
 };
 
-// ১. স্বাভাবিক ১২ ডিজিটের মূল অ্যাকাউন্ট আইডি জেনারেটর (কোনো চেক ডিজিট নেই)
-const generateAccountId = async (accountType) => {
-  const prefix = accountType && accountType.toUpperCase() === "MERCHANT" ? "21" : "10";
+// ১৫ ডিজিটের মূল অ্যাকাউন্ট আইডি জেনারেটর (কান্ট্রি কোড + অ্যাকাউন্ট টাইপ + রেন্ডম ডিজিট)
+const generateAccountId = async (accountType, countryDialCode = "880") => {
+  // কান্ট্রি কোড যদি ফরম্যাট করা না থাকে (যেমন +880 থেকে শুধু 880 বের করা)
+  const cleanDialCode = countryDialCode.replace('+', '');
+  
+  // মার্চেন্টের জন্য '21' এবং পার্সোনালের জন্য '10'
+  const typePrefix = accountType && accountType.toUpperCase() === "MERCHANT" ? "21" : "10";
+  
+  // প্রিফিক্স হবে: কান্ট্রি কোড + টাইপ প্রিফিক্স (যেমন: 880 + 21 = 8802)
+  const prefix = cleanDialCode + typePrefix; 
+
   let isUnique = false;
   let accountId = "";
 
   while (!isUnique) {
-    const randomDigits = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+    // মোট ১৫ ডিজিট পূরণের জন্য বাকি কয় ডিজিট রেন্ডম লাগবে তা হিসাব করা (১৫ - prefix.length)
+    const remainingDigitsCount = 15 - prefix.length;
+    
+    // রেন্ডম ডিজিট জেনারেট করা
+    const minMultiplier = Math.pow(10, remainingDigitsCount - 1);
+    const maxMultiplier = Math.pow(10, remainingDigitsCount) - 1;
+    const randomDigits = Math.floor(minMultiplier + Math.random() * (maxMultiplier - minMultiplier + 1)).toString();
+    
     accountId = prefix + randomDigits;
+    
+    // ইউনিকনেস চেক
     const existing = await Account.findOne({ accountId });
     if (!existing) isUnique = true;
   }
+  
   return accountId;
 };
 
