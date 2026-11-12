@@ -1,43 +1,62 @@
-import Account from '../../models/Account.js';
+import Account from '../../models/account.model.js';
 
 export const checkAccountController = async (req, res) => {
     try {
-        const { mobileNumber } = req.body;
+        const { mobileNumber, vid } = req.body;
 
-        if (!mobileNumber) {
+        if (!mobileNumber && !vid) {
             return res.status(400).json({
                 success: false,
-                message: "মোবাইল নাম্বার প্রদান করুন।"
+                errorCode: "MISSING_PARAMS"
             });
         }
 
-        const account = await Account.findOne({ mobileNumber });
+        let query = {};
+        let searchByVidOnly = false;
+
+        if (vid) {
+            query.vids = vid; 
+            if (!mobileNumber) {
+                searchByVidOnly = true; 
+            }
+        } else if (mobileNumber) {
+            query.mobileNumber = mobileNumber;
+        }
+
+        const account = await Account.findOne(query);
 
         if (!account) {
             return res.status(200).json({
                 success: true,
-                exists: false,
-                message: "এই নাম্বারে কোনো একাউন্ট পাওয়া যায়নি।"
+                exists: false
             });
+        }
+
+        // রেসপন্স ডেটা 
+        const responseData = {
+            accountId: account.accountId,
+            category: account.accountType,
+            subCategory: account.subType,
+            status: account.status,
+            vids: account.vids || []
+        };
+
+        // প্রাইভেসি সিকিউরিটির জন্য শুধু VID দিয়ে সার্চ করলে মোবাইল নাম্বার পাঠানো হবে না
+        if (!searchByVidOnly) {
+            responseData.mobileNumber = account.mobileNumber;
         }
 
         return res.status(200).json({
             success: true,
             exists: true,
-            data: {
-                accountId: account.accountId,
-                mobileNumber: account.mobileNumber,
-                category: account.accountType,
-                subCategory: account.subType,
-                status: account.status
-            }
+            data: responseData
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Check Account Error:", error);
         return res.status(500).json({
             success: false,
-            message: "সার্ভারে সমস্যা হয়েছে।"
+            errorCode: "SERVER_ERROR"
         });
     }
 };
