@@ -17,7 +17,7 @@ export const checkAccountController = async (req, res) => {
 
         // যদি ভার্চুয়াল আইডি (VID) দিয়ে সার্চ করা হয়
         if (vid) {
-            query.virtualIDs = { $in: [vid] }; 
+            query.virtualIds = { $in: [vid] }; 
             if (!mobileNumber) {
                 searchByVidOnly = true; // শুধু VID দিয়ে সার্চ করলে মোবাইল নাম্বার দেখাবে না
             }
@@ -41,7 +41,7 @@ export const checkAccountController = async (req, res) => {
             category: account.accountType,
             subCategory: account.subType,
             status: account.status,
-            virtualIDs: account.virtualIDs || []
+            virtualIds: account.virtualIds || []
         };
 
         // যদি শুধু VID দিয়ে সার্চ করা না হয় (অর্থাৎ মোবাইল নাম্বার দিয়ে করা হয়), তবেই মোবাইল নাম্বার দেখাবে
