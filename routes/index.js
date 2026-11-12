@@ -1,4 +1,4 @@
-import authRoutes from "./auth.routes.js";
+import authRoutes from "./authRoutes.js";
 import localeRoutes from "./locale.js";
 import adminRoutes from "./admin/adminRoutes.js";
 import smsRoutes from "./sms/smsRoutes.js";
