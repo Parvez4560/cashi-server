@@ -15,7 +15,8 @@ export const checkAccountController = async (req, res) => {
         let searchByVidOnly = false;
 
         if (vid) {
-            query.vids = vid; 
+            // এখানে ডাটাবেজের আসল ফিল্ডের নাম 'virtualIDs' দেওয়া হলো
+            query.virtualIDs = vid; 
             if (!mobileNumber) {
                 searchByVidOnly = true; 
             }
@@ -32,16 +33,14 @@ export const checkAccountController = async (req, res) => {
             });
         }
 
-        // রেসপন্স ডেটা 
         const responseData = {
             accountId: account.accountId,
             category: account.accountType,
             subCategory: account.subType,
             status: account.status,
-            vids: account.vids || []
+            virtualIDs: account.virtualIDs || []
         };
 
-        // প্রাইভেসি সিকিউরিটির জন্য শুধু VID দিয়ে সার্চ করলে মোবাইল নাম্বার পাঠানো হবে না
         if (!searchByVidOnly) {
             responseData.mobileNumber = account.mobileNumber;
         }
