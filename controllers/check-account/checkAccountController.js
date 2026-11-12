@@ -4,6 +4,7 @@ export const checkAccountController = async (req, res) => {
     try {
         const { mobileNumber, vid } = req.body;
 
+        // চেক করা হচ্ছে মোবাইল নাম্বার অথবা VID যেকোনো একটা দেওয়া হয়েছে কি না
         if (!mobileNumber && !vid) {
             return res.status(400).json({
                 success: false,
@@ -14,16 +15,17 @@ export const checkAccountController = async (req, res) => {
         let query = {};
         let searchByVidOnly = false;
 
+        // যদি ভার্চুয়াল আইডি (VID) দিয়ে সার্চ করা হয়
         if (vid) {
-            // এখানে ডাটাবেজের আসল ফিল্ডের নাম 'virtualIDs' দেওয়া হলো
-            query.virtualIDs = vid; 
+            query.virtualIDs = { $in: [vid] }; 
             if (!mobileNumber) {
-                searchByVidOnly = true; 
+                searchByVidOnly = true; // শুধু VID দিয়ে সার্চ করলে মোবাইল নাম্বার দেখাবে না
             }
         } else if (mobileNumber) {
             query.mobileNumber = mobileNumber;
         }
 
+        // ডাটাবেজ থেকে একাউন্ট খোঁজা
         const account = await Account.findOne(query);
 
         if (!account) {
@@ -33,6 +35,7 @@ export const checkAccountController = async (req, res) => {
             });
         }
 
+        // রেসপন্স ডেটা তৈরি করা
         const responseData = {
             accountId: account.accountId,
             category: account.accountType,
@@ -41,6 +44,7 @@ export const checkAccountController = async (req, res) => {
             virtualIDs: account.virtualIDs || []
         };
 
+        // যদি শুধু VID দিয়ে সার্চ করা না হয় (অর্থাৎ মোবাইল নাম্বার দিয়ে করা হয়), তবেই মোবাইল নাম্বার দেখাবে
         if (!searchByVidOnly) {
             responseData.mobileNumber = account.mobileNumber;
         }
