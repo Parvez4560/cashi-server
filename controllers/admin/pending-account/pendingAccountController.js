@@ -1,6 +1,6 @@
 import Account from "../../../models/Account.js";
 import VirtualAccount from "../../../models/VirtualAccount.js";
-import SmsQueue from "../../../models/sms/smsQueueModel.js"; // 🔹 SmsQueue ইমপোর্ট করা হলো
+import SmsQueue from "../../../models/sms/smsQueueModel.js"; // 🔹 SmsQueue ইম্পোর্ট করা হলো
 import bcrypt from "bcrypt";
 
 // ৫ ডিজিটের টেম্পোরারি পিন জেনারেটর ফাংশন
@@ -62,28 +62,53 @@ export const updatePendingAccountStatus = async (req, res) => {
         return res.status(404).json({ success: false, message: "Account not found." });
       }
 
-      // 🎯 মূল শর্ত: আগের স্ট্যাটাস PENDING এবং বর্তমান স্ট্যাটাস ACTIVE করা হলে, এবং পিন না থাকলে
-      if (existingAccount.status === "PENDING" && status === "ACTIVE" && !existingAccount.pin) {
-        generatedTempPin = generateTemporaryPin(); // ৫ ডিজিটের টেম্পোরারি পিন
+      let smsMessageText = null;
+      const accountTypeName = existingAccount.accountType || "Merchant";
+
+      // স্ট্যাটাস পরিবর্তন হলে এসএমএস কিউতে মেসেজ পাঠানোর লজিক
+      if (existingAccount.status !== status) {
         
-        // পিন হ্যাশ করা এবং সিকিউরিটি ফিল্ডগুলো সেট করা
-        const salt = await bcrypt.genSalt(10);
-        updateData.pin = await bcrypt.hash(generatedTempPin, salt);
-        updateData.isTempPin = true;
+        // 🎯 শর্ত ১: আগের স্ট্যাটাস PENDING এবং বর্তমান স্ট্যাটাস ACTIVE করা হলে, এবং পিন না থাকলে
+        if (status === "ACTIVE" && !existingAccount.pin) {
+          generatedTempPin = generateTemporaryPin(); // ৫ ডিজিটের টেম্পোরারি পিন
+          
+          // পিন হ্যাশ করা এবং সিকিউরিটি ফিল্ডগুলো সেট করা
+          const salt = await bcrypt.genSalt(10);
+          updateData.pin = await bcrypt.hash(generatedTempPin, salt);
+          updateData.isTempPin = true;
 
-        // ৩ দিনের (৭২ ঘণ্টা) মেয়াদ সেট করা
-        const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + 3);
-        updateData.tempPinExpiresAt = expiryDate;
+          // ৩ দিনের (৭২ ঘণ্টা) মেয়াদ সেট করা
+          const expiryDate = new Date();
+          expiryDate.setDate(expiryDate.getDate() + 3);
+          updateData.tempPinExpiresAt = expiryDate;
 
-        // 📥 এখানে সরাসরি SmsQueue-তে মেসেজ এন্ট্রি করে দেওয়া হলো, 
-        // যাতে আপনার MongoDB-এর 'smsqueues' কালেকশনে ওটিপির মতো এই মেসেজটিও জমা হয় এবং কাস্টমার আসল পিন পায়!
-        const accountTypeName = existingAccount.accountType || "Merchant";
-        await SmsQueue.create({
-          mobileNumber: existingAccount.mobileNumber,
-          message: `Congratulations! Your CashI ${accountTypeName} Account is Approved. Account ID: ${existingAccount.accountId}, Temporary PIN: ${generatedTempPin}. Please login and change your PIN within 3 days.`,
-          status: "PENDING"
-        });
+          smsMessageText = `Congratulations! Your CashI ${accountTypeName} Account is Approved. Account ID: ${existingAccount.accountId}, Temporary PIN: ${generatedTempPin}. Please set your PIN within 72 hours.`;
+        } 
+        // 🎯 শর্ত ২: অ্যাকাউন্ট BLOCKED করা হলে
+        else if (status === "BLOCKED") {
+          smsMessageText = `Dear Customer, your CashI ${accountTypeName} Account (ID: ${existingAccount.accountId}) has been BLOCKED due to security reasons. Please contact support.`;
+        } 
+        // 🎯 শর্ত ৩: অ্যাকাউন্ট FROZEN করা হলে
+        else if (status === "FROZEN") {
+          smsMessageText = `Dear Customer, your CashI ${accountTypeName} Account (ID: ${accountId}) has been FROZEN. Please contact support for details.`;
+        } 
+        // 🎯 শর্ত ৪: অ্যাকাউন্ট REJECTED করা হলে
+        else if (status === "REJECTED") {
+          smsMessageText = `Dear Customer, your CashI ${accountTypeName} Account application has been REJECTED. Please contact support for more info.`;
+        }
+        // 🎯 শর্ত ৫: অন্য কোনো স্ট্যাটাস থেকে পুনরায় ACTIVE করা হলে
+        else if (status === "ACTIVE") {
+          smsMessageText = `Dear Customer, your CashI ${accountTypeName} Account (ID: ${accountId}) is now ACTIVE. You can login now.`;
+        }
+
+        // মেসেজ তৈরি হলে সরাসরি SmsQueue-তে সেভ করা
+        if (smsMessageText) {
+          await SmsQueue.create({
+            mobileNumber: existingAccount.mobileNumber,
+            message: smsMessageText,
+            status: "PENDING"
+          });
+        }
       }
 
       // মূল ডেটাবেজ আপডেট
