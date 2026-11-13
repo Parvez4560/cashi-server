@@ -1,5 +1,4 @@
-import Account from "../../models/Account.js";
-import SmsQueue from "../../models/sms/smsQueueModel.js"; // 🔹 SmsQueue ইমপোর্ট করা
+import SmsQueue from "../../models/sms/smsQueueModel.js";
 
 // ১. অ্যান্ড্রয়েড অ্যাপ যখন প্রতি ১০ সেকেন্ড পর পর পেন্ডিং এসএমএস লিস্টের জন্য কল করবে
 export const getPendingSmsList = async (req, res) => {
@@ -9,38 +8,21 @@ export const getPendingSmsList = async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized: Invalid Secret Key" });
     }
 
-    // ক. অ্যাকাউন্ট অ্যাপ্রুভালের পেন্ডিং মেসেজগুলো আনা (যা আপনার Account মডেলে smsStatus: "PENDING" হিসেবে থাকে)
-    const pendingAccounts = await Account.find({ 
-      status: "ACTIVE", 
-      smsStatus: "PENDING" 
-    }).limit(5);
-
-    const accountSmsQueue = pendingAccounts.map(acc => ({
-      id: acc._id, 
-      type: 'ACCOUNT_APPROVAL',
-      mobileNumber: acc.mobileNumber,
-      message: `Congratulations! Your CashI Merchant Account is Approved. Account ID: ${acc.accountId}, Temporary PIN: ${acc.pin}. Please login and change your PIN immediately.`
-    }));
-
-    // খ. রেজিস্ট্রেশন ওটিপির পেন্ডিং মেসেজগুলো আনা (যা SmsQueue কালেকশনে জমা হয়)
-    const pendingOtpSms = await SmsQueue.find({ 
+    // SmsQueue থেকে PENDING থাকা যেকোনো মেসেজ (ওটিপি বা অ্যাকাউন্ট অ্যাপ্রুভাল) একসঙ্গে নিয়ে আসা
+    const pendingSmsList = await SmsQueue.find({ 
       status: "PENDING" 
-    }).limit(5);
+    }).limit(10);
 
-    const otpSmsQueue = pendingOtpSms.map(sms => ({
+    const smsQueueData = pendingSmsList.map(sms => ({
       id: sms._id,
-      type: 'OTP_VERIFICATION',
       mobileNumber: sms.mobileNumber,
       message: sms.message
     }));
 
-    // দুটি কিউ একসাথে যুক্ত করা (রেজিস্ট্রেশন ওটিপি এবং অ্যাকাউন্ট অ্যাপ্রুভাল উভয়ই থাকবে)
-    const combinedQueue = [...otpSmsQueue, ...accountSmsQueue];
-
     return res.status(200).json({
       success: true,
-      count: combinedQueue.length,
-      data: combinedQueue
+      count: smsQueueData.length,
+      data: smsQueueData
     });
 
   } catch (error) {
@@ -52,25 +34,24 @@ export const getPendingSmsList = async (req, res) => {
 // ২. অ্যান্ড্রয়েড অ্যাপ সফলভাবে এসএমএস পাঠিয়ে দেওয়ার পর সার্ভারকে কনফার্ম করবে
 export const markSmsAsSent = async (req, res) => {
   try {
-    const { id, type, accountId } = req.body;
+    const { id } = req.body;
     
-    // যদি এটি রেজিস্ট্রেশন বা দোকান রেজিস্ট্রেশনের ওটিপি হয়
-    if (type === 'OTP_VERIFICATION' && id) {
-      await SmsQueue.findByIdAndUpdate(id, { status: "SENT" });
-      return res.status(200).json({ success: true, message: "OTP SMS status updated to SENT." });
+    if (!id) {
+      return res.status(400).json({ success: false, message: "SMS ID is required." });
     }
 
-    // যদি এটি অ্যাকাউন্ট অ্যাপ্রুভাল এসএমএস হয়
-    if (accountId || type === 'ACCOUNT_APPROVAL') {
-      const targetId = accountId || id;
-      await Account.findOneAndUpdate(
-        { $or: [{ accountId: targetId }, { _id: targetId }] }, 
-        { smsStatus: "SENT" }
-      );
-      return res.status(200).json({ success: true, message: `Account SMS status updated to SENT.` });
+    // নির্দিষ্ট আইডির মেসেজটির স্ট্যাটাস SENT করে দেওয়া
+    const updatedSms = await SmsQueue.findByIdAndUpdate(
+      id, 
+      { status: "SENT" },
+      { new: true }
+    );
+
+    if (!updatedSms) {
+      return res.status(404).json({ success: false, message: "SMS queue item not found." });
     }
 
-    return res.status(400).json({ success: false, message: "Invalid request parameters." });
+    return res.status(200).json({ success: true, message: "SMS status successfully updated to SENT." });
 
   } catch (error) {
     console.error("Update SMS Status Error:", error);
