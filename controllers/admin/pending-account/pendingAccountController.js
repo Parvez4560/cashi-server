@@ -1,5 +1,6 @@
 import Account from "../../../models/Account.js";
 import VirtualAccount from "../../../models/VirtualAccount.js";
+import SmsQueue from "../../../models/sms/smsQueueModel.js"; // 🔹 SmsQueue ইমপোর্ট করা হলো
 import bcrypt from "bcrypt";
 
 // ৫ ডিজিটের টেম্পোরারি পিন জেনারেটর ফাংশন
@@ -32,7 +33,7 @@ export const updatePendingAccountStatus = async (req, res) => {
   try {
     const { accountId, virtualId, status, ...updateData } = req.body;
 
-    // 🔒 সিকিউরিটি চেক: কোনোভাবেই যেন ভুলবশত বা হ্যাকিংয়ের মাধ্যমে 'pin' বা সংবেদনশীল ফিল্ড আপডেট না হয়
+    // 🔒 সিকিউরিটি চেক: কোনোভাবেই যেন ভুলবশত বা হ্যাকিংয়ের মাধ্যমে সংবেদনশীল ফিল্ড আপডেট না হয়
     delete updateData.pin; 
     delete updateData.isTempPin;
     delete updateData.tempPinExpiresAt;
@@ -75,8 +76,14 @@ export const updatePendingAccountStatus = async (req, res) => {
         expiryDate.setDate(expiryDate.getDate() + 3);
         updateData.tempPinExpiresAt = expiryDate;
 
-        // আপনার অ্যান্ড্রয়েড ব্যাকগ্রাউন্ড এসএমএস কিউ সিস্টেমের জন্য স্ট্যাটাস পেন্ডিং করা
-        updateData.smsStatus = "PENDING";
+        // 📥 এখানে সরাসরি SmsQueue-তে মেসেজ এন্ট্রি করে দেওয়া হলো, 
+        // যাতে আপনার MongoDB-এর 'smsqueues' কালেকশনে ওটিপির মতো এই মেসেজটিও জমা হয় এবং কাস্টমার আসল পিন পায়!
+        const accountTypeName = existingAccount.accountType || "Merchant";
+        await SmsQueue.create({
+          mobileNumber: existingAccount.mobileNumber,
+          message: `Congratulations! Your CashI ${accountTypeName} Account is Approved. Account ID: ${existingAccount.accountId}, Temporary PIN: ${generatedTempPin}. Please login and change your PIN within 3 days.`,
+          status: "PENDING"
+        });
       }
 
       // মূল ডেটাবেজ আপডেট
