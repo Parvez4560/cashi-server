@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
 const accountSchema = new mongoose.Schema({
-  accountId: { type: String, required: true, unique: true, index: true }, // ১২ ডিজিটের মূল অ্যাকাউন্ট আইডি
-  accountType: { type: String, required: true, index: true }, // MERCHANT বা PERSONAL
-  subType: { type: String, required: true }, // retail, micro, standard ইত্যাদি
+  accountId: { type: String, required: true, unique: true, index: true },
+  accountType: { type: String, required: true, index: true },
+  subType: { type: String, required: true },
   companyName: { type: String, required: function() { return this.accountType === 'MERCHANT'; } },
   mobileNumber: { type: String, required: true, unique: true, index: true },
   localNumber: { type: String },
@@ -11,9 +11,11 @@ const accountSchema = new mongoose.Schema({
   countryIso: { type: String },
   dialCode: { type: String },
   pin: { type: String, required: false, default: null },
+  isTempPin: { type: Boolean, default: false },
+  tempPinExpiresAt: { type: Date, default: null },
   email: { type: String, required: true },
-  virtualIds: [{ type: String }], // সমস্ত ভার্চুয়াল আইডির সিম্পল লিস্ট
-  defaultVirtualId: { type: String, default: null }, // নাম্বারের মাধ্যমে পেমেন্ট আসলে সুনির্দিষ্টভাবে এই আইডিতেই জমা হবে
+  virtualIds: [{ type: String }],
+  defaultVirtualId: { type: String, default: null },
   ownerName: { type: String, required: true },
   fatherName: { type: String },
   motherName: { type: String },
