@@ -45,6 +45,12 @@ const accountSchema = new mongoose.Schema({
     utilityBillDoc: { type: String }
   },
 
+  trustedDevice: {
+    deviceToken: { type: String, default: null },
+    refreshToken: { type: String, default: null },
+    updatedAt: { type: Date, default: null }
+  },
+
   status: { 
     type: String, 
     enum: ['PENDING', 'ACTIVE', 'REJECTED', 'FROZEN', 'BLOCKED'], 
