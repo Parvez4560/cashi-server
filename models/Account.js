@@ -45,6 +45,8 @@ const accountSchema = new mongoose.Schema({
     utilityBillDoc: { type: String }
   },
 
+  tempOtp: { type: String, default: null },
+  tempOtpExpiresAt: { type: Date, default: null },
   trustedDevice: {
     deviceToken: { type: String, default: null },
     refreshToken: { type: String, default: null },
