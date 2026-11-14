@@ -3,8 +3,11 @@ import jwt from "jsonwebtoken";
 
 // ১. ওটিপি পাঠানো
 export const sendLoginOtp = async (req, res) => {
-  const { mobileNumber } = req.body;
-  if (!mobileNumber) return res.status(400).json({ success: false });
+  const { mobileNumber, deviceToken } = req.body;
+
+  if (!mobileNumber || !deviceToken) {
+    return res.status(400).json({ success: false });
+  }
 
   try {
     const user = await Account.findOne({ mobileNumber });
@@ -14,14 +17,14 @@ export const sendLoginOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      otpDemo: "1234" // টেস্টিংয়ের জন্য
+      otpDemo: "1234"
     });
   } catch (error) {
     return res.status(500).json({ success: false });
   }
 };
 
-// ২. ওটিপি ও ডিভাইস টোকেন একসাথে ভেরিফাই করা (৫ মিনিটের সময়সীমা সহ)
+// ২. ওটিপি ভেরিফাই এবং পিনের ধরণ চেক করা
 export const verifyLoginOtp = async (req, res) => {
   const { mobileNumber, otp, deviceToken } = req.body;
   
@@ -29,20 +32,30 @@ export const verifyLoginOtp = async (req, res) => {
     return res.status(400).json({ success: false });
   }
 
-  // ওটিপি এবং ডিভাইস টোকেনকে ক্রিপ্টোগ্রাফিক্যালি বাইন্ড করে ৫ মিনিটের টেম্পোরারি টোকেন ইস্যু
-  const otpVerifyToken = jwt.sign(
-    { mobileNumber, deviceToken, purpose: "otp_verified" },
-    process.env.JWT_SECRET,
-    { expiresIn: "5m" }
-  );
+  try {
+    const user = await Account.findOne({ mobileNumber });
+    if (!user) {
+      return res.status(404).json({ success: false });
+    }
 
-  return res.status(200).json({
-    success: true,
-    otpVerifyToken
-  });
+    const otpVerifyToken = jwt.sign(
+      { mobileNumber, deviceToken, purpose: "otp_verified" },
+      process.env.JWT_SECRET,
+      { expiresIn: "5m" }
+    );
+
+    return res.status(200).json({
+      success: true,
+      otpVerifyToken,
+      isTempPin: user.isTempPin
+    });
+
+  } catch (error) {
+    return res.status(500).json({ success: false });
+  }
 };
 
-// ৩. পিন ভেরিফাই করে ডিভাইস পার্মানেন্টলি সেভ ও অ্যাক্সেস/রিফ্রেশ টোকেন দেওয়া
+// ৩. পার্মানেন্ট পিন লগইন
 export const firstTimePinLogin = async (req, res) => {
   const { mobileNumber, pin, otpVerifyToken, deviceToken } = req.body;
 
@@ -53,7 +66,6 @@ export const firstTimePinLogin = async (req, res) => {
   try {
     const decoded = jwt.verify(otpVerifyToken, process.env.JWT_SECRET);
     
-    // ডিভাইস টোকেন এবং মোবাইল নম্বর ক্রস-চেক ও ভেরিফাই
     if (
       decoded.mobileNumber !== mobileNumber || 
       decoded.purpose !== "otp_verified" || 
@@ -63,27 +75,22 @@ export const firstTimePinLogin = async (req, res) => {
     }
 
     const user = await Account.findOne({ mobileNumber });
-    if (!user || user.pin !== pin) {
+    if (!user || user.isTempPin || user.pin !== pin) {
       return res.status(401).json({ success: false });
     }
 
-    // লং-টার্ম রিফ্রেশ টোকেন
     const refreshToken = jwt.sign(
       { accountId: user.accountId, deviceToken, purpose: "refresh" },
       process.env.JWT_SECRET
     );
 
-    // ১৫ মিনিটের শর্ট-লাইফ অ্যাক্সেস টোকেন
     const accessToken = jwt.sign(
       { accountId: user.accountId, mobileNumber: user.mobileNumber, accountType: user.accountType },
       process.env.JWT_SECRET,
       { expiresIn: "15m" }
     );
 
-    // সফলভাবে পিন দেওয়ার পরই কেবল ডিভাইস ও রিফ্রেশ টোকেন সার্ভারে সেভ হবে
-    if (!user.trustedDevices) user.trustedDevices = [];
-    user.trustedDevices = user.trustedDevices.filter(d => d.deviceToken !== deviceToken);
-    user.trustedDevices.push({ deviceToken, refreshToken });
+    user.trustedDevice = { deviceToken, refreshToken, updatedAt: new Date() };
     await user.save();
 
     return res.status(200).json({
@@ -102,7 +109,65 @@ export const firstTimePinLogin = async (req, res) => {
   }
 };
 
-// ৪. পরবর্তী দ্রুত লগইন (ওটিপি ছাড়া শুধু রিফ্রেশ টোকেন, ডিভাইস টোকেন ও পিন দিয়ে)
+// ৪. টেম্পোরারি পিন পরিবর্তন ও নতুন পিন সেট করা
+export const setupNewPin = async (req, res) => {
+  const { mobileNumber, tempPin, newPin, otpVerifyToken, deviceToken } = req.body;
+
+  if (!mobileNumber || !tempPin || !newPin || !otpVerifyToken || !deviceToken) {
+    return res.status(400).json({ success: false });
+  }
+
+  try {
+    const decoded = jwt.verify(otpVerifyToken, process.env.JWT_SECRET);
+    
+    if (
+      decoded.mobileNumber !== mobileNumber || 
+      decoded.purpose !== "otp_verified" || 
+      decoded.deviceToken !== deviceToken
+    ) {
+      return res.status(401).json({ success: false });
+    }
+
+    const user = await Account.findOne({ mobileNumber });
+    if (!user || !user.isTempPin || user.pin !== tempPin) {
+      return res.status(401).json({ success: false });
+    }
+
+    user.pin = newPin;
+    user.isTempPin = false;
+    user.tempPinExpiresAt = null;
+
+    const refreshToken = jwt.sign(
+      { accountId: user.accountId, deviceToken, purpose: "refresh" },
+      process.env.JWT_SECRET
+    );
+
+    const accessToken = jwt.sign(
+      { accountId: user.accountId, mobileNumber: user.mobileNumber, accountType: user.accountType },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    user.trustedDevice = { deviceToken, refreshToken, updatedAt: new Date() };
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        accessToken,
+        refreshToken,
+        accountId: user.accountId,
+        defaultVirtualId: user.defaultVirtualId,
+        ownerName: user.ownerName,
+        accountType: user.accountType
+      }
+    });
+  } catch (error) {
+    return res.status(401).json({ success: false });
+  }
+};
+
+// ৫. দ্রুত পিন লগইন (ওটিপি ছাড়া)
 export const quickPinLogin = async (req, res) => {
   const { pin, refreshToken, deviceToken } = req.body;
 
@@ -121,11 +186,10 @@ export const quickPinLogin = async (req, res) => {
       return res.status(401).json({ success: false });
     }
 
-    const isTrusted = user.trustedDevices?.some(
-      d => d.deviceToken === deviceToken && d.refreshToken === refreshToken
-    );
-
-    if (!isTrusted) {
+    if (
+      user.trustedDevice?.deviceToken !== deviceToken || 
+      user.trustedDevice?.refreshToken !== refreshToken
+    ) {
       return res.status(401).json({ success: false });
     }
 
