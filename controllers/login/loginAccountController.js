@@ -1,6 +1,7 @@
 import Account from "../../models/Account.js";
 import SmsQueue from "../../models/sms/smsQueueModel.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 // ১. ওটিপি পাঠানো (৬ ডিজিট, SmsQueue এবং সাময়িক ডিভাইস বাইন্ডিং সহ)
 export const sendLoginOtp = async (req, res) => {
@@ -117,7 +118,11 @@ export const firstTimePinLogin = async (req, res) => {
     }
 
     const user = await Account.findOne({ mobileNumber });
-    if (!user || user.isTempPin || user.pin !== pin) {
+    
+    // 🔥 bcrypt দিয়ে পার্মানেন্ট পিন ভেরিফিকেশন
+    const isPinValid = user ? await bcrypt.compare(pin, user.pin) : false;
+
+    if (!user || user.isTempPin || !isPinValid) {
       return res.status(401).json({ success: false });
     }
 
@@ -148,6 +153,7 @@ export const firstTimePinLogin = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error("First Time Pin Login Error:", error);
     return res.status(401).json({ success: false });
   }
 };
@@ -172,11 +178,19 @@ export const setupNewPin = async (req, res) => {
     }
 
     const user = await Account.findOne({ mobileNumber });
-    if (!user || !user.isTempPin || user.pin !== tempPin) {
+    
+    // 🔥 bcrypt দিয়ে টেম্পোরারি পিন ভেরিফিকেশন
+    const isTempPinValid = user ? await bcrypt.compare(tempPin, user.pin) : false;
+
+    if (!user || !user.isTempPin || !isTempPinValid) {
       return res.status(401).json({ success: false });
     }
 
-    user.pin = newPin;
+    // 🔥 নতুন পিন হ্যাশ করা হলো
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPin = await bcrypt.hash(newPin, salt);
+
+    user.pin = hashedNewPin;
     user.isTempPin = false;
     user.tempPinExpiresAt = null;
     user.tempOtp = undefined;
@@ -209,6 +223,7 @@ export const setupNewPin = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error("Setup New Pin Error:", error);
     return res.status(401).json({ success: false });
   }
 };
@@ -228,7 +243,11 @@ export const quickPinLogin = async (req, res) => {
     }
 
     const user = await Account.findOne({ accountId: decoded.accountId });
-    if (!user || user.pin !== pin) {
+    
+    // 🔥 bcrypt দিয়ে কুইক পিন ভেরিফিকেশন
+    const isPinValid = user ? await bcrypt.compare(pin, user.pin) : false;
+
+    if (!user || !isPinValid) {
       return res.status(401).json({ success: false });
     }
 
@@ -256,6 +275,7 @@ export const quickPinLogin = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error("Quick Pin Login Error:", error);
     return res.status(401).json({ success: false });
   }
 };
