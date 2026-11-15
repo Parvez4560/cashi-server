@@ -2,7 +2,7 @@ import Account from "../../models/Account.js";
 import SmsQueue from "../../models/sms/smsQueueModel.js";
 import jwt from "jsonwebtoken";
 
-// ১. ওটিপি পাঠানো (৬ ডিজিট এবং SmsQueue ইন্টিগ্রেশন সহ)
+// ১. ওটিপি পাঠানো (৬ ডিজিট, SmsQueue এবং সাময়িক ডিভাইস বাইন্ডিং সহ)
 export const sendLoginOtp = async (req, res) => {
   const { mobileNumber, deviceToken } = req.body;
 
@@ -19,9 +19,10 @@ export const sendLoginOtp = async (req, res) => {
     // ৬ ডিজিটের র্যান্ডম ওটিপি জেনারেট করা
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // ওটিপি এবং ৩০ সেকেন্ডের এক্সপায়ারি টাইম অ্যাকাউন্টে সাময়িকভাবে সেভ করা
+    // ওটিপি, ১২০ সেকেন্ডের এক্সপায়ারি এবং সিকিউরিটির জন্য ডিভাইস টোকেন সাময়িকভাবে সেভ করা
     user.tempOtp = otp;
-    user.tempOtpExpiresAt = new Date(Date.now() + 120 * 1000); // 120 সেকেন্ড মেয়াদ
+    user.tempOtpExpiresAt = new Date(Date.now() + 120 * 1000); 
+    user.tempDeviceToken = deviceToken; // <-- ডিভাইস বাইন্ডিং লক
     await user.save();
 
     // আপনার দেওয়া নির্দিষ্ট ফরম্যাটে এসএমএস টেক্সট তৈরি করা
@@ -43,7 +44,7 @@ export const sendLoginOtp = async (req, res) => {
   }
 };
 
-// ২. ওটিপি ভেরিফাই এবং পিনের ধরণ চেক করা
+// ২. ওটিপি ভেরিফাই এবং পিনের ধরণ চেক করা (ডিভাইস বাইন্ডিং সিকিউরিটি সহ)
 export const verifyLoginOtp = async (req, res) => {
   const { mobileNumber, otp, deviceToken } = req.body;
   
@@ -57,18 +58,25 @@ export const verifyLoginOtp = async (req, res) => {
       return res.status(404).json({ success: false });
     }
 
-    // ডেটাবেজের ওটিপির সাথে মিল আছে কি না এবং মেয়াদ শেষ হয়েছে কি না চেক করা
+    // সিকিউরিটি চেক: ওটিপি রিকোয়েস্ট করা ডিভাইস এবং ভেরিফাই করতে চাওয়া ডিভাইস এক কি না চেক করা
+    if (!user.tempDeviceToken || user.tempDeviceToken !== deviceToken) {
+      return res.status(401).json({ success: false, message: "Device mismatch" });
+    }
+
+    // ডেটাবেজের ওটিপির সাথে মিল আছে কি না চেক করা
     if (!user.tempOtp || user.tempOtp !== otp) {
       return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
 
+    // ওটিপির মেয়াদ শেষ হয়েছে কি না চেক করা
     if (user.tempOtpExpiresAt && new Date() > new Date(user.tempOtpExpiresAt)) {
       return res.status(400).json({ success: false, message: "OTP Expired" });
     }
 
-    // সফলভাবে ভেরিফাই হওয়ার পর সাময়িক ওটিপি ফিল্ডগুলো ক্লিয়ার করে দেওয়া
+    // সফলভাবে ভেরিফাই হওয়ার পর সাময়িক ওটিপি ও ডিভাইস ফিল্ডগুলো ক্লিয়ার করে দেওয়া
     user.tempOtp = undefined;
     user.tempOtpExpiresAt = undefined;
+    user.tempDeviceToken = undefined;
     await user.save();
 
     const otpVerifyToken = jwt.sign(
@@ -89,7 +97,7 @@ export const verifyLoginOtp = async (req, res) => {
   }
 };
 
-// ৩. পার্মানেন্ট পিন লগইন
+// ৩. পার্মানেন্ট পিন লগইন (এখানেই ফাইনাল ডিভাইস ট্রাস্টেড ও বাইন্ড হয়)
 export const firstTimePinLogin = async (req, res) => {
   const { mobileNumber, pin, otpVerifyToken, deviceToken } = req.body;
 
@@ -124,6 +132,7 @@ export const firstTimePinLogin = async (req, res) => {
       { expiresIn: "15m" }
     );
 
+    // 🔥 ফাইনাল পিন সফল হওয়ায় ডিভাইসটি এখন পার্মানেন্টলি ট্রাস্টেড হলো
     user.trustedDevice = { deviceToken, refreshToken, updatedAt: new Date() };
     await user.save();
 
@@ -143,7 +152,7 @@ export const firstTimePinLogin = async (req, res) => {
   }
 };
 
-// ৪. টেম্পোরারি পিন পরিবর্তন ও নতুন পিন সেট করা
+// ৪. টেম্পোরারি পিন পরিবর্তন ও নতুন পিন সেট করা (এখানেও ডিভাইস ট্রাস্টেড ও বাইন্ড হয়)
 export const setupNewPin = async (req, res) => {
   const { mobileNumber, tempPin, newPin, otpVerifyToken, deviceToken } = req.body;
 
@@ -171,6 +180,7 @@ export const setupNewPin = async (req, res) => {
     user.isTempPin = false;
     user.tempPinExpiresAt = null;
     user.tempOtp = undefined;
+    user.tempDeviceToken = undefined;
 
     const refreshToken = jwt.sign(
       { accountId: user.accountId, deviceToken, purpose: "refresh" },
@@ -183,6 +193,7 @@ export const setupNewPin = async (req, res) => {
       { expiresIn: "15m" }
     );
 
+    // 🔥 নতুন পিন সফলভাবে সেট হওয়ায় ডিভাইসটি এখন পার্মানেন্টলি ট্রাস্টেড হলো
     user.trustedDevice = { deviceToken, refreshToken, updatedAt: new Date() };
     await user.save();
 

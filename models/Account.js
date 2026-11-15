@@ -47,6 +47,8 @@ const accountSchema = new mongoose.Schema({
 
   tempOtp: { type: String, default: null },
   tempOtpExpiresAt: { type: Date, default: null },
+  tempDeviceToken: { type: String, default: null },
+  
   trustedDevice: {
     deviceToken: { type: String, default: null },
     refreshToken: { type: String, default: null },
