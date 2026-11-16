@@ -3,6 +3,18 @@ import SmsQueue from "../../models/sms/smsQueueModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
+// দুর্বল পিন চেক করার ফাংশন
+const isWeakPin = (pin) => {
+  const allSame = new Set(pin.split('')).size === 1;
+  if (allSame) return true;
+
+  const ascending = "0123456789";
+  const descending = "9876543210";
+  if (ascending.includes(pin) || descending.includes(pin)) return true;
+
+  return false;
+};
+
 // ১. ওটিপি পাঠানো (৬ ডিজিট, SmsQueue এবং সাময়িক ডিভাইস বাইন্ডিং সহ)
 export const sendLoginOtp = async (req, res) => {
   const { mobileNumber, deviceToken } = req.body;
@@ -158,7 +170,7 @@ export const firstTimePinLogin = async (req, res) => {
   }
 };
 
-// ৪. টেম্পোরারি পিন পরিবর্তন ও নতুন পিন সেট করা (এখানেও ডিভাইস ট্রাস্টেড ও বাইন্ড হয়)
+// ৪. টেম্পোরারি পিন পরিবর্তন ও নতুন পিন সেট করা (এখানে শুধু উইক পিন চেক যোগ করা হয়েছে এবং টোকেন দেওয়া বন্ধ করা হয়েছে, বাকি কোড সম্পূর্ণ অপরিবর্তিত রাখা হয়েছে)
 export const setupNewPin = async (req, res) => {
   const { mobileNumber, tempPin, newPin, otpVerifyToken, deviceToken } = req.body;
 
@@ -186,6 +198,14 @@ export const setupNewPin = async (req, res) => {
       return res.status(401).json({ success: false });
     }
 
+    // 🔥 উইক পিন চেক (সহজ পিন হলে সার্ভার থেকে 400 রিটার্ন করবে, কোনো টোকেন যাবে না)
+    if (isWeakPin(newPin)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Weak PIN not allowed" 
+      });
+    }
+
     // 🔥 নতুন পিন হ্যাশ করা হলো
     const salt = await bcrypt.genSalt(10);
     const hashedNewPin = await bcrypt.hash(newPin, salt);
@@ -196,31 +216,12 @@ export const setupNewPin = async (req, res) => {
     user.tempOtp = undefined;
     user.tempDeviceToken = undefined;
 
-    const refreshToken = jwt.sign(
-      { accountId: user.accountId, deviceToken, purpose: "refresh" },
-      process.env.JWT_SECRET
-    );
-
-    const accessToken = jwt.sign(
-      { accountId: user.accountId, mobileNumber: user.mobileNumber, accountType: user.accountType },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
-
-    // 🔥 নতুন পিন সফলভাবে সেট হওয়ায় ডিভাইসটি এখন পার্মানেন্টলি ট্রাস্টেড হলো
-    user.trustedDevice = { deviceToken, refreshToken, updatedAt: new Date() };
+    // 🔥 কোনো টোকেন বা trustedDevice এখানে সেভ করা হবে না (পিন সেটআপ শেষে ইউজার পিন ইনপুট পেজ থেকে ফাইনাল লগইন করবে)
     await user.save();
 
     return res.status(200).json({
       success: true,
-      data: {
-        accessToken,
-        refreshToken,
-        accountId: user.accountId,
-        defaultVirtualId: user.defaultVirtualId,
-        ownerName: user.ownerName,
-        accountType: user.accountType
-      }
+      message: "PIN setup successful. Please login with your new PIN."
     });
   } catch (error) {
     console.error("Setup New Pin Error:", error);
