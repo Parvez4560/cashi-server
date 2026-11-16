@@ -170,12 +170,12 @@ export const firstTimePinLogin = async (req, res) => {
   }
 };
 
-// ৪. টেম্পোরারি পিন পরিবর্তন ও নতুন পিন সেট করা (এখানে শুধু উইক পিন চেক যোগ করা হয়েছে এবং টোকেন দেওয়া বন্ধ করা হয়েছে, বাকি কোড সম্পূর্ণ অপরিবর্তিত রাখা হয়েছে)
+// ৪. টেম্পোরারি পিন পরিবর্তন ও নতুন পিন সেট করা (কোনো মেসেজ টেক্সট ছাড়া)
 export const setupNewPin = async (req, res) => {
   const { mobileNumber, tempPin, newPin, otpVerifyToken, deviceToken } = req.body;
 
   if (!mobileNumber || !tempPin || !newPin || !otpVerifyToken || !deviceToken) {
-    return res.status(400).json({ success: false });
+    return res.status(400).json({ success: false, errorCode: "MISSING_FIELDS" });
   }
 
   try {
@@ -186,27 +186,26 @@ export const setupNewPin = async (req, res) => {
       decoded.purpose !== "otp_verified" || 
       decoded.deviceToken !== deviceToken
     ) {
-      return res.status(401).json({ success: false });
+      return res.status(401).json({ success: false, errorCode: "INVALID_TOKEN" });
     }
 
     const user = await Account.findOne({ mobileNumber });
     
-    // 🔥 bcrypt দিয়ে টেম্পোরারি পিন ভেরিফিকেশন
-    const isTempPinValid = user ? await bcrypt.compare(tempPin, user.pin) : false;
-
-    if (!user || !user.isTempPin || !isTempPinValid) {
-      return res.status(401).json({ success: false });
+    if (!user || !user.isTempPin) {
+      return res.status(400).json({ success: false, errorCode: "INVALID_ACCOUNT" });
     }
 
-    // 🔥 উইক পিন চেক (সহজ পিন হলে সার্ভার থেকে 400 রিটার্ন করবে, কোনো টোকেন যাবে না)
+    // ১. টেম্পোরারি পিন ভুল হলে
+    const isTempPinValid = await bcrypt.compare(tempPin, user.pin);
+    if (!isTempPinValid) {
+      return res.status(400).json({ success: false, errorCode: "WRONG_TEMP_PIN" });
+    }
+
+    // ২. নতুন পিন দুর্বল হলে
     if (isWeakPin(newPin)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Weak PIN not allowed" 
-      });
+      return res.status(400).json({ success: false, errorCode: "WEAK_PIN" });
     }
 
-    // 🔥 নতুন পিন হ্যাশ করা হলো
     const salt = await bcrypt.genSalt(10);
     const hashedNewPin = await bcrypt.hash(newPin, salt);
 
@@ -216,16 +215,14 @@ export const setupNewPin = async (req, res) => {
     user.tempOtp = undefined;
     user.tempDeviceToken = undefined;
 
-    // 🔥 কোনো টোকেন বা trustedDevice এখানে সেভ করা হবে না (পিন সেটআপ শেষে ইউজার পিন ইনপুট পেজ থেকে ফাইনাল লগইন করবে)
     await user.save();
 
     return res.status(200).json({
-      success: true,
-      message: "PIN setup successful. Please login with your new PIN."
+      success: true
     });
   } catch (error) {
     console.error("Setup New Pin Error:", error);
-    return res.status(401).json({ success: false });
+    return res.status(401).json({ success: false, errorCode: "SERVER_ERROR" });
   }
 };
 
