@@ -220,6 +220,32 @@ export const registerUser = async (req, res) => {
       }
     );
 
+    // 🔹 ৯. categorypermissions অনুযায়ী আলাদা accountservices কালেকশনে অ্যাকাউন্টের সার্ভিস রেডি করা
+    const permissionDoc = await mongoose.connection
+      .collection("categorypermissions")
+      .findOne({
+        accountType: formattedAccountType,
+        subType: subType
+      });
+
+    const servicesList = (permissionDoc?.defaultServices || []).map((srv) => ({
+      serviceCode: srv.serviceCode,
+      serviceName: srv.serviceName,
+      status: srv.status || "INACTIVE",
+      updatedAt: new Date(),
+      updatedBy: "system",
+      note: "Default from categorypermissions"
+    }));
+
+    await mongoose.connection.collection("accountservices").insertOne({
+      accountId,
+      accountType: formattedAccountType,
+      subType,
+      services: servicesList,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
     return res.status(201).json({ 
       success: true,
       message: "Registration successful! Main account and default virtual service created.", 
