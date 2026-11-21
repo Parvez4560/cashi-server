@@ -7,6 +7,7 @@ import phoneRulesRoutes from './phone-rules/phoneRulesRoutes.js';
 import virtualAccountRoutes from './virtualAccountRoutes.js';
 import checkAccountRoutes from './check-account/checkAccountRoute.js';
 import loginRoutes from './login/loginAccountRoutes.js';
+import balanceRoutes from "./balance/balanceRoutes.js";
 
 export default function registerRoutes(app) {
   app.use("/account", authRoutes);
@@ -18,4 +19,5 @@ export default function registerRoutes(app) {
   app.use('/api/virtual-accounts', virtualAccountRoutes);
   app.use("/api/account", checkAccountRoutes);
   app.use("/api/login", loginRoutes);
+  app.use("/api/wallet", balanceRoutes);
 }
