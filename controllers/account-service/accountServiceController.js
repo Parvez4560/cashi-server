@@ -23,9 +23,11 @@ export const getAccountServices = async (req, res) => {
     }
 
     const accessToken = authHeader.split(" ")[1];
+    const jwtSecret = process.env.JWT_SECRET || process.env.JWT_ACCESS_SECRET;
+
     let decoded;
     try {
-      decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
+      decoded = jwt.verify(accessToken, jwtSecret);
     } catch (err) {
       return res.status(401).json({
         success: false,
