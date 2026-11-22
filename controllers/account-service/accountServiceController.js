@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import Account from "../../models/Account.js";
-import Service from "../../models/account-service/accountServiceModel.js";
-import AccountService from "../../models/Service.js";
+import Service from "../../models/Service.js";
+import AccountService from "../../models/account-service/accountServiceModel.js";
 
 export const getAccountServices = async (req, res) => {
   try {
