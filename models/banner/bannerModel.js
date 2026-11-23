@@ -4,10 +4,9 @@ const bannerSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
     imageUrl: { type: String, required: true, trim: true },
-    url: { type: String, default: '', trim: true }, // অফার বা বিস্তারিত দেখার লিংক (ঐচ্ছিক)
-    placement: { type: String, required: true, uppercase: true, trim: true }, // যেমন: HOME, WELCOME, SERVICE ইত্যাদি
+    url: { type: String, default: '', trim: true },
+    placement: { type: String, required: true, uppercase: true, trim: true },
 
-    // কোন অ্যাকাউন্ট টাইপের জন্য ব্যানার (ALL / PERSONAL / MERCHANT)
     accountType: {
       type: String,
       enum: ['ALL', 'PERSONAL', 'MERCHANT'],
@@ -16,19 +15,15 @@ const bannerSchema = new mongoose.Schema(
       trim: true
     },
 
-    // কোন সাব-ক্যাটাগরির জন্য ব্যানার (ALL / STANDARD / STUDENT / RESTRICTED / MICRO / RETAIL / ONLINE / CORPORATE)
+    // একাধিক সাব-টাইপ সিলেক্ট করার জন্য (যেমন: ['MICRO', 'RETAIL'] অথবা ['ALL'])
+    subTypes: {
+      type: [String],
+      default: ['ALL']
+    },
+
+    // সিঙ্গেল ভ্যালু সাপোর্ট / রেফারেন্সের জন্য
     subType: {
       type: String,
-      enum: [
-        'ALL',
-        'STANDARD',
-        'STUDENT',
-        'RESTRICTED',
-        'MICRO',
-        'RETAIL',
-        'ONLINE',
-        'CORPORATE'
-      ],
       default: 'ALL',
       uppercase: true,
       trim: true

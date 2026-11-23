@@ -1,5 +1,22 @@
 import Banner from '../../models/banner/bannerModel.js';
 
+// একাধিক subTypes বা সিঙ্গেল subType নরমালাইজ করার হেল্পার
+const normalizeSubTypes = (subTypes, subType) => {
+  let list = [];
+  if (Array.isArray(subTypes)) {
+    list = subTypes.map((item) => String(item || '').trim().toUpperCase()).filter(Boolean);
+  } else if (typeof subTypes === 'string' && subTypes.trim()) {
+    list = subTypes.split(',').map((item) => item.trim().toUpperCase()).filter(Boolean);
+  } else if (typeof subType === 'string' && subType.trim()) {
+    list = subType.split(',').map((item) => item.trim().toUpperCase()).filter(Boolean);
+  }
+
+  if (list.length === 0 || list.includes('ALL')) {
+    return ['ALL'];
+  }
+  return [...new Set(list)];
+};
+
 // অ্যাপ থেকে শুধু placement অনুযায়ী ওই পেজের সব ব্যানার পাঠানো
 // GET /api/banners?placement=HOME
 export const getBannersByPlacement = async (req, res) => {
@@ -33,7 +50,10 @@ export const getAdminBanners = async (req, res) => {
     const filter = {};
     if (req.query.placement) filter.placement = req.query.placement.toUpperCase().trim();
     if (req.query.accountType) filter.accountType = req.query.accountType.toUpperCase().trim();
-    if (req.query.subType) filter.subType = req.query.subType.toUpperCase().trim();
+    if (req.query.subType) {
+      const st = req.query.subType.toUpperCase().trim();
+      filter.$or = [{ subTypes: st }, { subType: st }];
+    }
 
     const banners = await Banner.find(filter).sort({ placement: 1, priority: -1, createdAt: -1 });
 
@@ -50,7 +70,7 @@ export const getAdminBanners = async (req, res) => {
 // POST /api/banners/admin
 export const addBanner = async (req, res) => {
   try {
-    const { title, imageUrl, url, placement, accountType, subType, priority, isActive } = req.body;
+    const { title, imageUrl, url, placement, accountType, subType, subTypes, priority, isActive } = req.body;
 
     if (!title || !imageUrl || !placement) {
       return res.status(400).json({
@@ -59,13 +79,18 @@ export const addBanner = async (req, res) => {
       });
     }
 
+    const cleanAccountType = (accountType || '').toString().trim().toUpperCase() || 'ALL';
+    const cleanSubTypes = normalizeSubTypes(subTypes, subType);
+    const cleanSubType = cleanSubTypes.length === 1 ? cleanSubTypes[0] : cleanSubTypes.join(',');
+
     const created = await Banner.create({
       title,
       imageUrl,
       url: url || '',
       placement,
-      accountType: accountType || 'ALL',
-      subType: subType || 'ALL',
+      accountType: cleanAccountType,
+      subTypes: cleanSubTypes,
+      subType: cleanSubType,
       priority: priority ?? 0,
       isActive: isActive ?? true
     });
@@ -84,9 +109,21 @@ export const addBanner = async (req, res) => {
 // PUT /api/banners/admin/:id
 export const updateBanner = async (req, res) => {
   try {
+    const updatePayload = { ...req.body };
+
+    if (updatePayload.accountType !== undefined) {
+      updatePayload.accountType = String(updatePayload.accountType || '').trim().toUpperCase() || 'ALL';
+    }
+
+    if (updatePayload.subTypes !== undefined || updatePayload.subType !== undefined) {
+      const cleanSubTypes = normalizeSubTypes(updatePayload.subTypes, updatePayload.subType);
+      updatePayload.subTypes = cleanSubTypes;
+      updatePayload.subType = cleanSubTypes.length === 1 ? cleanSubTypes[0] : cleanSubTypes.join(',');
+    }
+
     const updated = await Banner.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updatePayload,
       { new: true, runValidators: true }
     );
 
