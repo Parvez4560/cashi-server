@@ -9,6 +9,7 @@ import checkAccountRoutes from './check-account/checkAccountRoute.js';
 import loginRoutes from './login/loginAccountRoutes.js';
 import balanceRoutes from "./balance/balanceRoutes.js";
 import accountServiceRoutes from "./account-service/accountServiceRoutes.js";
+import bannerRoutes from "./banner/bannerRoutes.js";
 
 export default function registerRoutes(app) {
   app.use("/account", authRoutes);
@@ -22,4 +23,5 @@ export default function registerRoutes(app) {
   app.use("/api/login", loginRoutes);
   app.use("/api/wallet", balanceRoutes);
   app.use("/api/account", accountServiceRoutes);
+  app.use("/api/banners", bannerRoutes);
 }
