@@ -110,7 +110,7 @@ export const registerUser = async (req, res) => {
     // ১. সাব-টাইপ নির্ধারণ
     let subType = bodyData.subType;
     if (formattedAccountType === "MERCHANT") {
-      subType = bodyData.hasTradeLicense && bodyData.hasTradeLicense.toLowerCase() === 'yes' ? 'retail' : 'micro';
+      subType = bodyData.hasTradeLicense && bodyData.hasTradeLicense.toLowerCase() === 'yes' ? 'RETAIL' : 'MICRO';
     } else {
       subType = bodyData.subType || 'standard';
     }
