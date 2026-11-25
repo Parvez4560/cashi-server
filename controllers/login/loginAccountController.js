@@ -146,7 +146,7 @@ export const firstTimePinLogin = async (req, res) => {
     const accessToken = jwt.sign(
       { accountId: user.accountId, mobileNumber: user.mobileNumber, accountType: user.accountType },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "30m" }
     );
 
     // 🔥 ফাইনাল পিন সফল হওয়ায় ডিভাইসটি এখন পার্মানেন্টলি ট্রাস্টেড হলো
