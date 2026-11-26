@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import Transaction from "../../models/transaction/transactionModel.js";
+import Transaction from "../models/transaction/transactionModel.js";
 
 const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
