@@ -238,6 +238,7 @@ export async function ingestSmsPayment(req, res) {
     }
 
     const created = await SmsPaymentLog.create({
+      adminId: req.body?.adminId || process.env.DEFAULT_ADMIN_ID,
       provider,
       sender,
       trxId: parsed.trxId,

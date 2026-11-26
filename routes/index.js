@@ -26,6 +26,6 @@ export default function registerRoutes(app) {
   app.use("/api/wallet", balanceRoutes);
   app.use("/api/account", accountServiceRoutes);
   app.use("/api/banners", bannerRoutes);
-  app.use("/api/sms", smsIngestRoutes);
+  app.use("/api/sms-payment", smsIngestRoutes);
   app.use("/wallet", addMoneyRoutes);
 }
