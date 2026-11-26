@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import Admin from "../../models/admin/adminModel.js";
 import SmsPaymentLog from "../../models/sms-payment-log/SmsPaymentLog.js";
 
 // শুধু অনুমোদিত Sender / Provider তালিকা
@@ -17,8 +18,6 @@ const ALLOWED_RULES = {
   },
 };
 
-const SMS_GATEWAY_TOKEN = process.env.SMS_GATEWAY_TOKEN || "";
-const SMS_GATEWAY_SECRET = process.env.SMS_GATEWAY_SECRET || "";
 const MAX_SKEW_MS = 2 * 60 * 1000;
 
 const seenNonces = new Map();
@@ -122,7 +121,7 @@ function parsePaymentSms(provider, rawSms) {
 
   return {
     amount,
-    customerPhone, // মোবাইল নম্বর বা ব্যাংক/অ্যাকাউন্ট নম্বর
+    customerPhone,
     trxId,
     messageTime,
     messageDateText,
@@ -130,15 +129,11 @@ function parsePaymentSms(provider, rawSms) {
   };
 }
 
-function verifyGatewayAuth(req) {
-  if (!SMS_GATEWAY_TOKEN || !SMS_GATEWAY_SECRET) {
-    return { ok: false, reason: "Gateway auth config missing" };
-  }
-
+async function verifyGatewayAuth(req) {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ")
     ? authHeader.slice(7).trim()
-    : String(req.headers["x-gateway-token"] || "").trim();
+    : String(req.headers["x-service-token"] || req.headers["x-gateway-token"] || "").trim();
 
   const timestampHeader = String(req.headers["x-timestamp"] || "").trim();
   const nonce = String(req.headers["x-nonce"] || "").trim();
@@ -146,15 +141,6 @@ function verifyGatewayAuth(req) {
 
   if (!token || !timestampHeader || !nonce || !signature) {
     return { ok: false, reason: "Missing authentication headers" };
-  }
-
-  const tokenBuf = Buffer.from(token);
-  const expectedTokenBuf = Buffer.from(SMS_GATEWAY_TOKEN);
-  if (
-    tokenBuf.length !== expectedTokenBuf.length ||
-    !crypto.timingSafeEqual(tokenBuf, expectedTokenBuf)
-  ) {
-    return { ok: false, reason: "Invalid gateway token" };
   }
 
   const ts = Number(timestampHeader);
@@ -167,9 +153,25 @@ function verifyGatewayAuth(req) {
     return { ok: false, reason: "Duplicate nonce detected" };
   }
 
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+  const admin = await Admin.findOne({
+    serviceTokens: {
+      $elemMatch: {
+        tokenHash,
+        isActive: true,
+        $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
+      },
+    },
+  }).lean();
+
+  if (!admin) {
+    return { ok: false, reason: "Invalid or inactive service token" };
+  }
+
   const payloadString = `${timestampHeader}.${nonce}.${JSON.stringify(req.body || {})}`;
   const expectedSig = crypto
-    .createHmac("sha256", SMS_GATEWAY_SECRET)
+    .createHmac("sha256", token)
     .update(payloadString)
     .digest("hex");
 
@@ -184,12 +186,18 @@ function verifyGatewayAuth(req) {
   }
 
   seenNonces.set(nonce, Date.now() + MAX_SKEW_MS);
-  return { ok: true };
+
+  await Admin.updateOne(
+    { _id: admin._id, "serviceTokens.tokenHash": tokenHash },
+    { $set: { "serviceTokens.$.lastUsedAt": new Date() } }
+  );
+
+  return { ok: true, adminId: admin._id };
 }
 
 export async function ingestSmsPayment(req, res) {
   try {
-    const auth = verifyGatewayAuth(req);
+    const auth = await verifyGatewayAuth(req);
     if (!auth.ok) {
       return res.status(401).json({
         success: false,
@@ -238,7 +246,7 @@ export async function ingestSmsPayment(req, res) {
     }
 
     const created = await SmsPaymentLog.create({
-      adminId: req.body?.adminId || process.env.DEFAULT_ADMIN_ID,
+      adminId: auth.adminId,
       provider,
       sender,
       trxId: parsed.trxId,
