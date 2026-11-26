@@ -11,6 +11,7 @@ import balanceRoutes from "./balance/balanceRoutes.js";
 import accountServiceRoutes from "./account-service/accountServiceRoutes.js";
 import bannerRoutes from "./banner/bannerRoutes.js";
 import smsIngestRoutes from "./sms-ingest/smsIngestRoutes.js";
+import addMoneyRoutes from "./transaction/addMoneyRoutes.js";
 
 export default function registerRoutes(app) {
   app.use("/account", authRoutes);
@@ -26,4 +27,5 @@ export default function registerRoutes(app) {
   app.use("/api/account", accountServiceRoutes);
   app.use("/api/banners", bannerRoutes);
   app.use("/api/sms", smsIngestRoutes);
+  app.use("/wallet", addMoneyRoutes);
 }

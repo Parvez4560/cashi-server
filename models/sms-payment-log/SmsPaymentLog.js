@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const smsPaymentLogSchema = new mongoose.Schema(
   {
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      required: true,
+      index: true,
+    },
     provider: {
       type: String,
       enum: ["BKASH", "NAGAD", "ROCKET", "OTHER"],
@@ -37,6 +43,10 @@ const smsPaymentLogSchema = new mongoose.Schema(
       default: null,
       trim: true,
       index: true,
+    },
+    messageTime: {
+      type: Date,
+      default: null,
     },
     rawSms: {
       type: String,
@@ -76,4 +86,6 @@ const smsPaymentLogSchema = new mongoose.Schema(
 
 smsPaymentLogSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export default mongoose.model("SmsPaymentLog", smsPaymentLogSchema);
+const SmsPaymentLog =
+  mongoose.models.SmsPaymentLog || mongoose.model("SmsPaymentLog", smsPaymentLogSchema);
+export default SmsPaymentLog;

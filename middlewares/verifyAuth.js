@@ -37,7 +37,14 @@ export async function verifyAuth(req, res, next) {
       req.headers["x-device-token"] || req.body?.deviceToken || ""
     ).trim();
 
-    if (incomingDeviceToken && incomingDeviceToken !== deviceToken) {
+    if (!incomingDeviceToken) {
+      return res.status(401).json({
+        success: false,
+        code: "DEVICE_TOKEN_REQUIRED",
+      });
+    }
+
+    if (incomingDeviceToken !== deviceToken) {
       return res.status(403).json({
         success: false,
         code: "DEVICE_TOKEN_MISMATCH",
