@@ -6,15 +6,15 @@ import SmsPaymentLog from "../../models/sms-payment-log/SmsPaymentLog.js";
 const ALLOWED_RULES = {
   BKASH: {
     senders: ["BKASH",],
-    keywords: ["YOU HAVERECEIVED PAYMENT"],
+    keywords: ["YOU HAVE RECEIVED PAYMENT"],
   },
   NAGAD: {
     senders: ["NAGAD",],
-    keywords: ["YOU HAVERECEIVED PAYMEN"],
+    keywords: ["YOU HAVE RECEIVED PAYMEN"],
   },
   ROCKET: {
     senders: ["16216",],
-    keywords: ["YOU HAVERECEIVED PAYMEN"],
+    keywords: ["YOU HAVE RECEIVED PAYMEN"],
   },
 };
 
