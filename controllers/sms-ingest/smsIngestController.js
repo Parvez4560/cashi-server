@@ -5,16 +5,16 @@ import SmsPaymentLog from "../../models/sms-payment-log/SmsPaymentLog.js";
 // শুধু অনুমোদিত Sender / Provider তালিকা
 const ALLOWED_RULES = {
   BKASH: {
-    senders: ["BKASH", "16247"],
-    keywords: ["TRXID", "RECEIVED", "CASH IN", "PAYMENT", "TK", "BDT"],
+    senders: ["BKASH",],
+    keywords: ["YOU HAVERECEIVED PAYMENT"],
   },
   NAGAD: {
-    senders: ["NAGAD", "16167"],
-    keywords: ["TXNID", "TRXID", "RECEIVED", "BDT", "TK"],
+    senders: ["NAGAD",],
+    keywords: ["YOU HAVERECEIVED PAYMEN"],
   },
   ROCKET: {
-    senders: ["16216", "ROCKET", "DBBL"],
-    keywords: ["TXNID", "TRXID", "RECEIVED", "BDT", "TK"],
+    senders: ["16216",],
+    keywords: ["YOU HAVERECEIVED PAYMEN"],
   },
 };
 
