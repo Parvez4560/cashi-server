@@ -18,6 +18,19 @@ const ALLOWED_RULES = {
   },
 };
 
+const BLOCKED_KEYWORDS = [
+  "PAYMENT REVERSAL",
+  "REVERSAL",
+  "REFUND",
+  "SEND MONEY",
+  "CASH OUT",
+  "PAID TK",
+  "MOBILE RECHARGE",
+  "BILL PAY",
+  "FAILED",
+  "UNSUCCESSFUL",
+];
+
 const MAX_SKEW_MS = 2 * 60 * 1000;
 
 const seenNonces = new Map();
@@ -79,20 +92,24 @@ function parsePaymentSms(provider, rawSms) {
   const rule = ALLOWED_RULES[provider];
   if (!rule) return null;
 
+  const isBlocked = BLOCKED_KEYWORDS.some((kw) => upperText.includes(kw));
+  if (isBlocked) return null;
+
   const hasKeyword = rule.keywords.some((kw) => upperText.includes(kw));
   if (!hasKeyword) return null;
 
-  // 1. Amount বের করা (Balance Tk যেন না আসে, তাই payment/received/cash in/bdt/tk এর কাছাকাছি প্রথম অ্যামাউন্ট)
+  // 1. Amount ("You have received payment Tk 5.00..." থেকে Balance Tk বাদ দিয়ে)
   const amountMatch =
-    text.match(/(?:PAYMENT|RECEIVED|CASH\s*IN)\s+(?:OF\s+)?(?:TK|BDT)\s*([\d,]+(?:\.\d{1,2})?)/i) ||
-    text.match(/(?:TK|BDT)\s*([\d,]+(?:\.\d{1,2})?)/i) ||
-    text.match(/([\d,]+(?:\.\d{1,2})?)\s*(?:TK|BDT)/i);
+    text.match(
+      /(?:YOU\s+HAVE\s+RECEIVED\s+(?:PAYMENT|DEPOSIT|REMITTANCE)|RECEIVED\s+(?:PAYMENT|MONEY)|CASH\s*IN)\s+(?:OF\s+)?(?:TK|BDT)\s*([\d,]+(?:\.\d{1,2})?)/i
+    ) ||
+    text.match(/(?:PAYMENT|RECEIVED|CASH\s*IN)\s+(?:OF\s+)?(?:TK|BDT)\s*([\d,]+(?:\.\d{1,2})?)/i);
 
   if (!amountMatch) return null;
   const amount = Number(amountMatch[1].replace(/,/g, ""));
   if (!Number.isFinite(amount) || amount <= 0) return null;
 
-  // 2. মোবাইল নম্বর বা ব্যাংক/কার্ড/অ্যাকাউন্ট নম্বর ("from ..." এর পরের অংশ)
+  // 2. From এর পর মোবাইল নম্বর বা ব্যাংক/অ্যাকাউন্ট নম্বর
   const fromMatch = text.match(/\bfrom\s+([A-Z0-9X*_-]+)/i);
   const accountOrPhone = fromMatch ? fromMatch[1].trim() : null;
 
@@ -101,12 +118,18 @@ function parsePaymentSms(provider, rawSms) {
     : null;
   const customerPhone = plainPhoneMatch ? plainPhoneMatch[1] : accountOrPhone;
 
-  // 3. TrxID / TxnID বের করা
+  // 3. Balance Tk (এসএমএসে থাকলে)
+  const balanceMatch = text.match(/\bBalance\s+(?:TK|BDT)\s*([\d,]+(?:\.\d{1,2})?)/i);
+  const accountBalance = balanceMatch
+    ? Number(balanceMatch[1].replace(/,/g, ""))
+    : null;
+
+  // 4. TrxID / TxnID
   const trxMatch = text.match(/\b(?:TRXID|TXNID)\s*[:\-]?\s*([A-Z0-9]{6,25})\b/i);
   if (!trxMatch) return null;
   const trxId = trxMatch[1].toUpperCase();
 
-  // 4. মেসেজের ভেতরের Time ও Date বের করা (যেমন: at 25/11/2026 11:55)
+  // 5. Time & Date ("at 26/11/2026 17:08")
   const dateTimeMatch = text.match(/\bat\s+(\d{1,2}\/\d{1,2}\/\d{4})(?:\s+(\d{1,2}:\d{2}))?/i);
   const messageDateText = dateTimeMatch
     ? `${dateTimeMatch[1]}${dateTimeMatch[2] ? ` ${dateTimeMatch[2]}` : ""}`
@@ -115,13 +138,16 @@ function parsePaymentSms(provider, rawSms) {
     ? parseSmsDateTime(dateTimeMatch[1], dateTimeMatch[2])
     : null;
 
-  // 5. Reference (যদি মেসেজে থাকে)
-  const refMatch = text.match(/\b(?:REF|REFERENCE)\s*[:\-]?\s*([A-Z0-9_-]{2,30})\b/i);
-  const reference = refMatch ? refMatch[1].toUpperCase() : null;
+  // 6. Reference (যেমন: Ref 357368735257735 বা Ref: INV-123)
+  const refMatch = text.match(
+    /\b(?:REF(?:ERENCE)?)\s*[:\-]?\s*([A-Z0-9_-]{1,50})(?=\s*\.|\s+Fee\b|\s+Balance\b|\s+TrxID\b|$)/i
+  );
+  const reference = refMatch ? refMatch[1].trim().toUpperCase() : null;
 
   return {
     amount,
     customerPhone,
+    accountBalance,
     trxId,
     messageTime,
     messageDateText,
@@ -269,6 +295,7 @@ export async function ingestSmsPayment(req, res) {
         trxId: created.trxId,
         amount: created.amount,
         customerPhone: created.customerPhone,
+        accountBalance: parsed.accountBalance,
         reference: created.reference,
         messageTime: created.messageTime,
         messageDateText: parsed.messageDateText,
