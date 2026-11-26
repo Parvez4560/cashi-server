@@ -3,5 +3,6 @@ seed/seed-categories.js
 seed/seed-service.js
 seed/seed-category-permissions.js
 seed/seedBalanceConfigs.js
-seed/createAdmin.js
+seed/admin/createAdmin.js
+seed/admin/rotateServiceToken.js
 seed/​country-phone-rules.js
