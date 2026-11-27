@@ -1,8 +1,18 @@
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import VirtualAccount from "../../models/VirtualAccount.js";
 import Transaction from "../../models/transaction/transactionModel.js";
 import { ADD_MONEY_SOURCE_RULES } from "../../config/addMoneySources.js";
 import { generateTransactionId } from "../../utils/transactionId.js";
+
+const ADD_MONEY_SECRET =
+  process.env.ADD_MONEY_JWT_SECRET || process.env.JWT_SECRET;
+const ADD_MONEY_EXPIRES_IN = process.env.ADD_MONEY_TOKEN_EXPIRES_IN || "15m";
+
+function hashValue(val) {
+  return crypto.createHash("sha256").update(String(val)).digest("hex");
+}
 
 function sumCurrencyCodes(currencyMapOrObj) {
   if (!currencyMapOrObj) return 0;
@@ -14,15 +24,94 @@ function sumCurrencyCodes(currencyMapOrObj) {
   return entries.reduce((sum, [, val]) => sum + (Number(val) || 0), 0);
 }
 
+// ১. অ্যাড মানি টোকেন তৈরি করা (কন্ট্রোলারের ভেতরেই)
+export const createAddMoneyToken = async (req, res) => {
+  try {
+    const accountId = req.auth?.accountId;
+    const deviceToken = req.auth?.deviceToken;
+
+    if (!accountId || !deviceToken) {
+      return res.status(401).json({
+        success: false,
+        code: "UNAUTHORIZED",
+      });
+    }
+
+    const jti = crypto.randomBytes(16).toString("hex");
+    const addMoneyToken = jwt.sign(
+      {
+        jti,
+        scope: "ADD_MONEY",
+        accountId,
+        deviceHash: hashValue(deviceToken),
+      },
+      ADD_MONEY_SECRET,
+      { expiresIn: ADD_MONEY_EXPIRES_IN }
+    );
+
+    return res.status(200).json({
+      success: true,
+      addMoneyToken,
+      expiresIn: ADD_MONEY_EXPIRES_IN,
+    });
+  } catch (error) {
+    console.error("Create Add Money Token Error:", error);
+    return res.status(500).json({
+      success: false,
+      code: "SERVER_ERROR",
+    });
+  }
+};
+
+// ২. অ্যাড মানি টোকেন যাচাই + ব্যালেন্স অ্যাড করা (কন্ট্রোলারের ভেতরেই)
 export const addMoney = async (req, res) => {
   const session = await mongoose.startSession();
 
   try {
     const accountId = req.auth?.accountId;
-    if (!accountId) {
+    const activeDeviceToken = req.auth?.deviceToken;
+
+    if (!accountId || !activeDeviceToken) {
       return res.status(401).json({
         success: false,
         code: "UNAUTHORIZED",
+      });
+    }
+
+    // Add-Money Token নেওয়া (হেডার বা বডি থেকে)
+    const rawAddMoneyToken = String(
+      req.headers["x-add-money-token"] || req.body?.addMoneyToken || ""
+    ).trim();
+
+    if (!rawAddMoneyToken) {
+      return res.status(401).json({
+        success: false,
+        code: "ADD_MONEY_TOKEN_REQUIRED",
+      });
+    }
+
+    let decodedAddMoney;
+    try {
+      decodedAddMoney = jwt.verify(rawAddMoneyToken, ADD_MONEY_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        code:
+          err.name === "TokenExpiredError"
+            ? "ADD_MONEY_TOKEN_EXPIRED"
+            : "INVALID_ADD_MONEY_TOKEN",
+      });
+    }
+
+    // টোকেনের scope, accountId এবং deviceHash যাচাই
+    if (
+      decodedAddMoney?.scope !== "ADD_MONEY" ||
+      decodedAddMoney?.accountId !== accountId ||
+      decodedAddMoney?.deviceHash !== hashValue(activeDeviceToken)
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: "INVALID_ADD_MONEY_TOKEN_CONTEXT",
       });
     }
 
